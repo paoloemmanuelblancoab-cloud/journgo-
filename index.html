@@ -73,7 +73,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .pickRow button img{width:100%;height:100%;display:block}
 .pickRow button[aria-pressed="true"]{background:var(--mid);transform:translateY(-3px) scale(1.1);box-shadow:0 7px 0 var(--ink)}
 .foot{max-width:60ch;margin:6px auto 0;text-align:center;color:#c9d4f5;font-size:12px;line-height:1.5}
-@media(max-width:720px){.games{grid-template-columns:1fr;gap:9px}.gcard{padding:9px 12px}.gcard img{width:50px;height:50px}.gcard h3{font-size:19px}#hub .spacer{min-height:90px}}
+@media(max-width:720px){.games{grid-template-columns:1fr 1fr;gap:9px}.gcard{flex-direction:column;text-align:center;padding:10px 8px;gap:6px}.gcard img{width:46px;height:46px}.gcard h3{font-size:17px}.gcard p{display:none}.gcard small{margin-top:2px}#hub .spacer{min-height:60px}}
 
 /* modal */
 #modal{position:fixed;inset:0;z-index:30;background:rgba(2,4,11,.72);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
@@ -107,7 +107,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 <main id="hub">
   <header>
     <h1 class="display">JourKnows<br><span>Arcade</span></h1>
-    <p>Three 3D minigames powered by this month's real Philippine stories. Tap a Journ to say hi.</p>
+    <p>Six 3D minigames powered by this month's real Philippine stories. Tap a Journ to say hi.</p>
   </header>
   <div class="spacer"></div>
   <section class="games" id="games" aria-label="Minigames"></section>
@@ -148,8 +148,8 @@ if(!window.THREE){
 
 /* ---------- save ---------- */
 const KEY='jourknows-arcade-v1';
-let S={best:{dash:0,match:0,whack:0},pick:1,mute:false};
-try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');S=Object.assign(S,raw);S.best=Object.assign({dash:0,match:0,whack:0},raw.best||{});}catch(e){}
+let S={best:{dash:0,match:0,whack:0,stack:0,pop:0,flap:0},pick:1,mute:false};
+try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');S=Object.assign(S,raw);S.best=Object.assign({dash:0,match:0,whack:0,stack:0,pop:0,flap:0},raw.best||{});}catch(e){}
 const saveS=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
 /* ---------- sound ---------- */
@@ -211,6 +211,8 @@ const STORY_DATA={
 };
 const STORIES=SP.map(sp=>Object.assign({sp},STORY_DATA[sp.name]));
 const storyOf=sp=>STORIES[sp.id];
+/* story data check: warns in the console if an entry is incomplete */
+STORIES.forEach(s=>{const bad=[];['title','stat','label','claim','why'].forEach(k=>{if(!s[k])bad.push(k);});if(typeof s.ans!=='boolean')bad.push('ans');if(!s.src||!/^https:\/\//.test(s.src.url||''))bad.push('src.url');if(bad.length)console.warn('[JourKnows story data]',s.sp.name,'missing or invalid:',bad.join(', '));});
 
 /* ---------- 2D art (used for icons and card faces) ---------- */
 function artRaw(s){
@@ -517,7 +519,7 @@ function mkDash(){
     },
     start(){running=true;setPrompt();UI.hearts(3);UI.mid('');},
     update(dt,t){
-      if(running&&!ST.over)ST.dist+=(13+.6*ST.resolved)*dt;
+      if(running&&!ST.over){const ng=gates.find(x=>!x.done),gap=ng?ng.d-ST.dist:99,slow=gap<24?.6+.4*clamp((gap-6)/18,0,1):1;ST.dist+=(13+.6*ST.resolved)*slow*dt;}
       const dist=ST.dist;
       ST.px+=(lane2x(ST.lane)-ST.px)*Math.min(1,dt*12);
       /* world */
@@ -807,6 +809,196 @@ function mkWhack(){
   };
 }
 
+/* ---------- shared bits for games 4 to 6 ---------- */
+function tagSprite(text,bg='#ffffff',fg='#050813',sw=2.7){
+  const c=document.createElement('canvas');c.width=300;c.height=110;const x=c.getContext('2d');
+  x.fillStyle=bg;rrect(x,6,6,288,98,38);x.fill();x.lineWidth=8;x.strokeStyle='#050813';x.stroke();
+  let fs=44;x.font=`700 ${fs}px Fredoka,system-ui,sans-serif`;
+  while(x.measureText(text).width>250&&fs>20){fs-=3;x.font=`700 ${fs}px Fredoka,system-ui,sans-serif`;}
+  x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(text,150,58);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+  s.scale.set(sw,sw*110/300,1);s.renderOrder=10;return s;
+}
+const hitRay=new THREE.Raycaster();
+const ndc=(x,y)=>new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1);
+
+/* ---------- Game 4: Stat Stack (3D timing tower) ---------- */
+function mkStack(){
+  const scene=new THREE.Scene();scene.background=skyTex('#0a2260','#a9bdf0');lights(scene);
+  const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,200),fx=new FX(scene);
+  const H=.6,COLS=['#1f48a8','#6f8fe6','#0a2260','#a9bdf0','#2a4fae','#c9d4f5'];
+  const base=mk(BOX,'#050813',0);base.scale.set(5,1,5);base.position.y=-.5;scene.add(base);
+  const block=(x,y,z,w,d,i)=>{const b=mk(BOX,COLS[i%COLS.length],1.03);b.scale.set(w,H,d);b.position.set(x,y,z);scene.add(b);return b;};
+  block(0,H/2,0,3,3,0);
+  const stack=[{x:0,z:0,w:3,d:3}],falls=[],seen=[],deck=shuffle(STORIES);
+  let lv=0,cur=null,running=false,over=false,score=0,combo=0,camY=0,asp=1;
+  function spawn(){
+    lv++;const p=stack[stack.length-1],ax=lv%2?'x':'z';
+    cur={ax,p,w:p.w,d:p.d,t:-Math.PI/2,m:block(p.x,lv*H+H/2,p.z,p.w,p.d,lv)};
+  }
+  function drop(){
+    if(!running||over||!cur)return;
+    const{p,ax,m}=cur,od=ax==='x'?'z':'x',sz=ax==='x'?'w':'d';
+    const off=m.position[ax]-p[ax],S=cur[sz],ov=S-Math.abs(off);
+    if(ov<=0){falls.push({m,v:0});cur=null;SND.hit();buzz(60);end();return;}
+    const perfect=Math.abs(off)<.16;let pos=p[ax],ns=S;
+    if(perfect){combo++;fx.burst(new THREE.Vector3(m.position.x,lv*H+.3,m.position.z),14);SND.ok();}
+    else{
+      combo=0;ns=ov;pos=p[ax]+off/2;
+      const oh=block(m.position.x,lv*H+H/2,m.position.z,cur.w,cur.d,lv);
+      oh.scale[ax]=Math.abs(off);oh.position[ax]=m.position[ax]+Math.sign(off)*(S/2-Math.abs(off)/2);
+      falls.push({m:oh,v:0});SND.pop();
+    }
+    m.scale[ax]=ns;m.position[ax]=pos;m.position[od]=p[od];
+    const e={x:m.position.x,z:m.position.z,w:ax==='x'?ns:cur.w,d:ax==='z'?ns:cur.d};stack.push(e);
+    const pts=10+(perfect?15*Math.min(combo,5):0);score+=pts;UI.score(score);UI.mid(lv+' blocks');
+    const[sx,sy]=scr(new THREE.Vector3(e.x,lv*H+1,e.z),cam);UI.pop(perfect?'Perfect! +'+pts:'+'+pts,sx,sy);
+    if(lv%3===0){const s=deck[seen.length%deck.length];seen.push(s);UI.learn(`<b>${esc(s.sp.type)}: ${esc(s.stat)}</b>${esc(s.title)}`,3200);}
+    spawn();
+  }
+  function end(){
+    over=true;running=false;const h=stack.length-1,st=h>=12?3:h>=7?2:h>=3?1:0;
+    setTimeout(()=>finish('stack',{title:'Tower down!',score,stars:st,line:`${h} blocks high`,stories:seen.length?seen:[deck[0]]}),900);
+  }
+  return{scene,cam,
+    resize(){asp=innerWidth/innerHeight;const h=asp<1?22:12;cam.left=-h*asp/2;cam.right=h*asp/2;cam.top=h/2;cam.bottom=-h/2;cam.updateProjectionMatrix();},
+    start(){running=true;spawn();UI.mid('0 blocks');UI.prompt('Stat Stack','Tap to drop the block.','Line it up. Perfect drops keep the tower wide. Every 3 blocks unlocks a story.');setTimeout(()=>{if(running)$('#prompt').hidden=true;},3800);},
+    update(dt,t){
+      if(cur&&running){cur.t+=dt*(2.1+Math.min(lv,30)*.08);cur.m.position[cur.ax]=cur.p[cur.ax]+Math.sin(cur.t)*3.4;}
+      for(let i=falls.length-1;i>=0;i--){const f=falls[i];f.v+=dt*22;f.m.position.y-=f.v*dt;f.m.rotation.z+=dt*1.5;if(f.m.position.y<camY-14){scene.remove(f.m);falls.splice(i,1);}}
+      camY+=((stack.length-1)*H-camY)*Math.min(1,dt*3);
+      cam.position.set(9,camY+9,9);cam.lookAt(0,camY+1.2,0);fx.update(dt);
+    },
+    pointer(type){if(type==='down')drop();},
+    key(e){if(e.code==='Space'||e.key==='Enter'){e.preventDefault();drop();}},
+    dispose(){}
+  };
+}
+
+/* ---------- Game 5: Stat Pop (3D bubble pop) ---------- */
+function mkPop(){
+  const scene=new THREE.Scene();scene.background=skyTex('#14307a','#a9bdf0');lights(scene);
+  const cam=new THREE.PerspectiveCamera(50,1,.1,100),fx=new FX(scene);cam.position.set(0,0,14);
+  const NR=8,deck=shuffle(STORIES),seen=[],BC=['#6f8fe6','#1f48a8','#a9bdf0','#2a4fae'];
+  let W=3,running=false,over=false,score=0,streak=0,hearts=3,round=0,correct=0,bub=[],q=null,wait=0;
+  const clearB=()=>{bub.forEach(b=>scene.remove(b.g));bub=[];};
+  function nextRound(){
+    if(round>=NR){end();return;}
+    clearB();q=deck[round];round++;
+    const opts=shuffle([q,...shuffle(STORIES.filter(s=>s!==q)).slice(0,3)]),cs=shuffle([-1,0,1]);cs.push(cs[0]);
+    opts.forEach((s,i)=>{
+      const g=new THREE.Group();g.add(sph(BC[i],0,0,0,1.25,1.25,1.25,1.07));g.add(sph('#ffffff',-.5,.6,1,.3,.2,.15,0));
+      const tg=tagSprite(s.stat);tg.position.set(0,0,1.4);g.add(tg);
+      g.position.set(cs[i]*W,-7-i*2.8,0);scene.add(g);
+      bub.push({g,s,ok:s===q,bx:cs[i]*W,ph:rnd(0,6),v:2.2+round*.15});
+    });
+    UI.prompt(`Round ${round} of ${NR} · Which number fits?`,q.title,q.label);
+  }
+  function lose(msg,x,y){streak=0;hearts--;UI.hearts(hearts);SND.bad();buzz([60,40,60]);UI.pop(msg,x,y,'bad');if(hearts<=0)end();}
+  function end(){
+    if(over)return;over=true;running=false;const st=correct>=7?3:correct>=5?2:correct>=3?1:0;
+    setTimeout(()=>finish('pop',{title:hearts<=0?'Out of hearts!':'Round complete!',score,stars:st,line:`${correct} of ${NR} stats popped`,stories:seen.length?seen:[q||deck[0]]}),700);
+  }
+  return{scene,cam,
+    resize(){const a=innerWidth/innerHeight;cam.aspect=a;cam.updateProjectionMatrix();W=clamp(6.53*a-1.55,1.2,4.2);},
+    start(){running=true;UI.hearts(3);UI.mid('');nextRound();},
+    update(dt,t){
+      if(wait>0){wait-=dt;if(wait<=0&&!over)nextRound();}
+      else if(running&&!over)for(const b of bub.slice()){
+        b.g.position.y+=b.v*dt;b.g.position.x=b.bx+Math.sin(t*1.8+b.ph)*.35;
+        if(b.g.position.y>8){
+          scene.remove(b.g);bub=bub.filter(x=>x!==b);
+          if(b.ok){const[x,y]=scr(new THREE.Vector3(0,5,0),cam);lose('Too slow',x,y);UI.learn(`<b>It was ${esc(q.stat)}</b>${esc(q.label)}`,3000);seen.push(q);clearB();wait=.9;}
+        }
+      }
+      fx.update(dt);
+    },
+    pointer(type,x,y){
+      if(type!=='down'||!running||over||wait>0)return;
+      hitRay.setFromCamera(ndc(x,y),cam);
+      const h=hitRay.intersectObjects(bub.map(b=>b.g),true)[0];if(!h)return;
+      const b=bub.find(k=>{let o=h.object;while(o){if(o===k.g)return true;o=o.parent;}return false;});if(!b)return;
+      const[px,py]=scr(b.g.position,cam);fx.burst(b.g.position.clone(),b.ok?22:10,b.ok?undefined:['#050813','#6f8fe6']);
+      scene.remove(b.g);bub=bub.filter(k=>k!==b);
+      if(b.ok){
+        streak++;correct++;const pts=100+Math.min(streak,6)*20;score+=pts;UI.score(score);SND.ok();buzz(30);UI.pop('+'+pts,px,py);
+        seen.push(q);UI.learn(`<b>${esc(q.sp.type)}: ${esc(q.stat)}</b>${esc(q.label)}`,3000);clearB();wait=.8;
+      }else{SND.pop();lose('Not that one',px,py);}
+    },
+    dispose(){}
+  };
+}
+
+/* ---------- Game 6: Fact Flap (3D flappy gates) ---------- */
+function mkFlap(){
+  const scene=new THREE.Scene();scene.background=skyTex('#5f82dc','#eef2ff');scene.fog=new THREE.Fog(0xdfe6fa,40,110);lights(scene);
+  const cam=new THREE.PerspectiveCamera(50,1,.1,200),fx=new FX(scene);
+  const NG=8,GAP=20,FIRST=22,FL=-7.2,CE=7.2,SEG=[[FL-2,-4.3],[-.9,.9],[4.3,CE+2]];
+  for(const y of[FL-1,CE+1]){const b=mk(BOX,'#14307a',0);b.scale.set(300,2,30);b.position.set(0,y,-8);scene.add(b);}
+  const bg=[];for(let i=0;i<12;i++){const h=rnd(4,12),b=mk(BOX,pick(['#6f8fe6','#a9bdf0','#1f48a8','#c9d4f5']),1.02);b.scale.set(rnd(3,5),h,3);b.userData={x:i*9};b.position.set(0,FL+h/2,-14);scene.add(b);bg.push(b);}
+  const facts=STORIES.filter(s=>s.ans),fics=STORIES.filter(s=>!s.ans);
+  const claims=shuffle([...shuffle(facts).slice(0,3),...shuffle(fics).slice(0,NG-3)]);
+  const gates=claims.map((cl,i)=>{
+    const g=new THREE.Group(),factUp=Math.random()<.5;
+    SEG.forEach(([a,b])=>{const s=mk(BOX,'#0a2260',1.04);s.scale.set(1.4,b-a,1.4);s.position.y=(a+b)/2;g.add(s);});
+    [[2.6,factUp],[-2.6,!factUp]].forEach(([y,f])=>{
+      const pl=new THREE.Mesh(new THREE.PlaneGeometry(1.4,3.4),new THREE.MeshBasicMaterial({color:f?0xeef2ff:0x050813,transparent:true,opacity:.55}));pl.position.set(0,y,-.8);g.add(pl);
+      const tg=tagSprite(f?'FACT':'FICTION',f?'#ffffff':'#050813',f?'#050813':'#ffffff',2.3);tg.position.set(-2.4,y,.5);g.add(tg);
+    });
+    scene.add(g);return{d:FIRST+i*GAP,claim:cl,factUp,g,done:false};
+  });
+  const pl=cloneJourn(S.pick);pl.scale.setScalar(.8);pl.rotation.order='ZYX';pl.rotation.y=Math.PI/2;scene.add(pl);
+  const ST={dist:0,py:0,vy:0,hearts:3,score:0,streak:0,correct:0,resolved:0,inv:0,over:false,shake:0};
+  let running=false,live=false,cx=3,cz=18;
+  const flap=()=>{if(!running||ST.over)return;live=true;ST.vy=9.5;sfx(520,'sine',.07,.06,820);};
+  function setPrompt(){const g=gates.find(x=>!x.done);if(g)UI.prompt(`Claim ${gates.indexOf(g)+1} of ${NG} · Fact or fiction?`,g.claim.claim,'Tap or press Space to flap. Fly through the FACT or FICTION opening.');}
+  function hurt(msg){
+    ST.hearts--;ST.inv=1.3;ST.streak=0;ST.shake=REDUCED?0:.5;UI.hearts(ST.hearts);SND.bad();buzz([60,40,60]);
+    const[x,y]=scr(new THREE.Vector3(0,ST.py+1.5,0),cam);UI.pop(msg,x,y,'bad');if(ST.hearts<=0)end();
+  }
+  function resolve(g){
+    g.done=true;ST.resolved++;const ok=((ST.py>0)===g.factUp)===g.claim.ans;
+    const[x,y]=scr(new THREE.Vector3(0,ST.py+1.5,0),cam);
+    if(ok){ST.streak++;ST.correct++;const pts=100+Math.min(ST.streak,5)*10;ST.score+=pts;fx.burst(new THREE.Vector3(0,ST.py,0),20);SND.ok();buzz(25);UI.pop('+'+pts,x,y);}
+    else hurt('Not quite');
+    UI.score(ST.score);
+    UI.learn(`<b>${ok?'Correct':'Not quite'}: this one is ${g.claim.ans?'a fact':'fiction'}.</b>${esc(g.claim.why)}`,3600);
+    if(ST.over)return;
+    if(ST.resolved>=NG)setTimeout(end,1300);else setPrompt();
+  }
+  function end(){
+    if(ST.over)return;ST.over=true;running=false;const st=ST.correct>=7?3:ST.correct>=5?2:ST.correct>=3?1:0;
+    setTimeout(()=>finish('flap',{title:ST.hearts<=0?'Out of hearts!':'Finish line!',score:ST.score,stars:st,line:`${ST.correct} of ${NG} claims right`,stories:claims.slice(0,Math.max(1,ST.resolved))}),900);
+  }
+  return{scene,cam,
+    resize(){const a=innerWidth/innerHeight;cam.aspect=a;cam.updateProjectionMatrix();cx=a<1?1.8:3.2;cz=a<1?26:18;},
+    start(){running=true;UI.hearts(3);UI.mid('');setPrompt();},
+    update(dt,t){
+      if(running&&live&&!ST.over){
+        ST.dist+=(5.2+.25*ST.resolved)*dt;ST.vy-=26*dt;ST.py+=ST.vy*dt;
+        if(ST.py<FL+.8){ST.py=FL+.8;ST.vy=Math.max(ST.vy,0);}
+        if(ST.py>CE-.8){ST.py=CE-.8;ST.vy=Math.min(ST.vy,0);}
+      }
+      ST.inv=Math.max(0,ST.inv-dt);
+      for(const g of gates){
+        const x=g.d-ST.dist;g.g.position.x=x;
+        if(!running||ST.over||g.done)continue;
+        if(ST.inv<=0&&Math.abs(x)<1.25&&SEG.some(([a,b])=>ST.py+.6>a&&ST.py-.6<b))hurt('Ouch!');
+        if(ST.over)break;
+        if(x<-.6)resolve(g);
+      }
+      for(const b of bg)b.position.x=(((b.userData.x-ST.dist*.5)%108)+108)%108-40;
+      pl.position.set(0,ST.py-.8,0);animJourn(pl,t,0,.12,12);pl.rotation.z=clamp(ST.vy*.035,-.6,.6);
+      pl.visible=ST.inv<=0||Math.floor(t*14)%2===0;
+      ST.shake=Math.max(0,ST.shake-dt*1.6);const sh=ST.shake*.3;
+      cam.position.set(cx+rnd(-sh,sh),.5+rnd(-sh,sh),cz);cam.lookAt(cx,0,0);fx.update(dt);
+    },
+    pointer(type){if(type==='down')flap();},
+    key(e){if(e.code==='Space'||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){e.preventDefault();flap();}},
+    dispose(){}
+  };
+}
+
 /* ---------- controller ---------- */
 const GAMES={
   dash:{title:'Fact Dash',icon:3,desc:'Run a 3D track and pick the right gate: fact or fiction?',make:mkDash,
@@ -814,10 +1006,22 @@ const GAMES={
   match:{title:'Journ Match',icon:7,desc:'Flip 3D cards and pair every Journ with its topic.',make:mkMatch,
     how:['Tap a card to flip it, then flip a second one.','Match each Journ with its topic card.','Every match pops the Journ out and unlocks its story.','Fewer moves means more stars.']},
   whack:{title:'Whack-a-Journ',icon:10,desc:'Smash the Journ wearing the topic that fits the headline.',make:mkWhack,
-    how:['A headline appears at the top.','Journs pop out of the holes wearing topic tags. Tap the one whose topic fits the story.','A wrong whack costs a heart. Chain right ones for combo points.','You have 60 seconds.']}
+    how:['A headline appears at the top.','Journs pop out of the holes wearing topic tags. Tap the one whose topic fits the story.','A wrong whack costs a heart. Chain right ones for combo points.','You have 60 seconds.']},
+  stack:{title:'Stat Stack',icon:4,desc:'Time your taps to build a tower. Every few blocks unlocks a story.',make:mkStack,
+    how:['A block slides back and forth. Tap, click, or press Space to drop it.','Only the part that lands on the tower stays. The rest falls off.','A near-perfect drop keeps the block full size and builds a combo.','Miss the tower completely and the game ends.']},
+  pop:{title:'Stat Pop',icon:2,desc:'Pop the bubble holding the number that fits the headline.',make:mkPop,
+    how:['A headline and a clue appear at the top.','Bubbles float up, each holding a number from a different story.','Tap the bubble with the matching number. A wrong pop or a missed bubble costs a heart.','8 rounds, 3 hearts.']},
+  flap:{title:'Fact Flap',icon:6,desc:'Flap through the FACT or FICTION opening to answer each claim.',make:mkFlap,
+    how:['Tap, click, or press Space to flap. Gravity does the rest.','Read the claim, then fly through the FACT or FICTION opening.','Hitting a wall or choosing wrong costs a heart.','8 claims, 3 hearts.']}
 };
 let cur=null,curKey=null,hubScene=null;
-function setScene(o){if(cur&&cur.dispose)cur.dispose();cur=o;o.resize();}
+function freeScene(sc){
+  if(!sc||sc===hubScene)return;
+  sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];
+    ms.forEach(m=>{if(m===OUT)return;if(m.map&&m.map!==GRAD)m.map.dispose();if(m.isSpriteMaterial||m.isMeshBasicMaterial||m.isPointsMaterial)m.dispose();});});
+  if(sc.background&&sc.background.dispose)sc.background.dispose();
+}
+function setScene(o){if(cur&&cur.dispose)cur.dispose();if(cur)freeScene(cur.scene);cur=o;o.resize();}
 function modal(html){$('#mCard').innerHTML=html;$('#modal').hidden=false;const b=$('#mCard button');if(b)b.focus({preventScroll:true});}
 function closeModal(){$('#modal').hidden=true;}
 function renderHub(){
