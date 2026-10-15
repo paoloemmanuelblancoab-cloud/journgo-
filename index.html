@@ -4,586 +4,215 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a1f5c">
-<title>JourKnows GO</title>
+<title>JourKnows Arcade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Palette: navy, white, black. Everything else is a tint of those three. */
-:root{
-  --bg:#ffffff; --surface:#ffffff; --ink:#050813; --muted:#47527a; --line:rgba(5,8,19,.16);
-  --accent:#0a2260; --accent-ink:#ffffff; --teal:#1f48a8; --gold:#0a2260; --soft:#eef1fa;
-  --map-road:#ffffff; --map-block:#e8ecf8; --map-park:#d3dbf1; --map-water:#a9b9e8; --map-bldg:#c6d0ee;
-  --shadow:0 4px 18px rgba(5,8,19,.16);
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#02040b; --surface:#0a1330; --ink:#f4f6ff; --muted:#9aa7d4; --line:rgba(244,246,255,.18);
-    --accent:#ffffff; --accent-ink:#0a1f5c; --teal:#6f8fe6; --gold:#ffffff; --soft:#0f1b45;
-    --map-road:#02040b; --map-block:#0a1330; --map-park:#0f1c4a; --map-water:#173a8f; --map-bldg:#16245a;
-    --shadow:0 4px 18px rgba(0,0,0,.55);
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#02040b; --surface:#0a1330; --ink:#f4f6ff; --muted:#9aa7d4; --line:rgba(244,246,255,.18);
-  --accent:#ffffff; --accent-ink:#0a1f5c; --teal:#6f8fe6; --gold:#ffffff; --soft:#0f1b45;
-  --map-road:#02040b; --map-block:#0a1330; --map-park:#0f1c4a; --map-water:#173a8f; --map-bldg:#16245a;
-  --shadow:0 4px 18px rgba(0,0,0,.55);
-}
+:root{--ink:#050813;--navy:#0a2260;--blue:#1f48a8;--mid:#6f8fe6;--pale:#c9d4f5;--soft:#eef1fa;--white:#fff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:#02040b;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
 .display{font-family:"Fredoka",ui-rounded,"Hiragino Maru Gothic ProN",system-ui,sans-serif;letter-spacing:.2px}
-#app{position:relative;height:100%;width:100%;max-width:560px;margin:0 auto;overflow:hidden;background:var(--bg)}
-canvas#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* chunky cartoon buttons */
+.cbtn{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);font-weight:700;padding:11px 18px;font-size:16px;transition:transform .08s,box-shadow .08s}
+.cbtn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.cbtn.navy{background:var(--navy);color:#fff}
+.cbtn.round{width:46px;height:46px;border-radius:50%;padding:0;font-size:20px;display:grid;place-items:center}
 
 /* HUD */
-.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;align-items:center;pointer-events:none;z-index:5}
-.hud>*{pointer-events:auto}
-.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow);white-space:nowrap}
-.lvl{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;min-width:150px}
-.lvlBadge{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:15px}
-.xpWrap{flex:1}
-.xpTxt{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px}
-.xpBar{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
-.xpBar i{display:block;height:100%;width:0;background:var(--teal);border-radius:6px;transition:width .4s}
-.spacer{flex:1}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
-.dot.on{background:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 30%,transparent)}
+#hud{position:fixed;left:0;right:0;top:0;display:flex;gap:8px;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0;pointer-events:none;z-index:10}
+#hud>*{pointer-events:auto}
+.chip{background:#fff;border:3px solid var(--ink);border-radius:999px;box-shadow:0 4px 0 var(--ink);padding:5px 14px;font-weight:700;font-size:15px;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center}
+#hScore{font-family:"Fredoka",system-ui,sans-serif;font-size:20px;min-width:70px;justify-content:center}
+.hsp{flex:1}
+#hHearts{gap:2px;color:var(--navy);font-size:20px;letter-spacing:1px}
+#hHearts .lost{opacity:.18}
+#hHearts:empty{display:none}
+#prompt{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(580px,calc(100% - 24px));background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:0 5px 0 var(--ink);padding:10px 16px 12px;z-index:9;text-align:center;pointer-events:none}
+#prompt small{display:block;font-size:11.5px;letter-spacing:.8px;font-weight:700;color:var(--blue);text-transform:uppercase}
+#prompt b{display:block;font-family:"Fredoka",system-ui,sans-serif;font-size:clamp(17px,4.4vw,23px);line-height:1.2;margin-top:2px}
+#prompt span{display:block;font-size:12.5px;color:#47527a;margin-top:3px;line-height:1.35}
+#prompt span:empty{display:none}
+#prompt.bump{animation:bump .35s cubic-bezier(.2,1.5,.4,1)}
+@keyframes bump{from{transform:translateX(-50%) scale(.85)}}
+#learn{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:var(--navy);color:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:0 5px 0 var(--ink);padding:12px 16px;z-index:9;font-size:14.5px;line-height:1.45;pointer-events:none;animation:rise .3s cubic-bezier(.2,1.4,.4,1)}
+#learn b{font-family:"Fredoka",system-ui,sans-serif;font-size:17px;display:block;margin-bottom:2px}
+@keyframes rise{from{transform:translate(-50%,30px);opacity:0}}
+#pops{position:fixed;inset:0;pointer-events:none;z-index:11;overflow:hidden}
+.pop{position:absolute;transform:translate(-50%,-50%);font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:30px;color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:0 3px 0 var(--ink);animation:floatUp .9s ease-out forwards;white-space:nowrap}
+.pop.bad{color:var(--pale)}
+@keyframes floatUp{to{transform:translate(-50%,-130px) scale(1.25);opacity:0}}
 
-/* nav */
-.nav{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;display:flex;gap:10px;z-index:5;align-items:flex-end}
-.navBtn{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:20px;padding:10px 16px;font-weight:600;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px}
-.navBtn svg{width:22px;height:22px}
-.navBtn.main{background:var(--accent);color:var(--accent-ink);border-color:transparent;min-width:96px;padding:12px 18px}
-.toast{position:absolute;top:70px;left:50%;transform:translate(-50%,-12px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:88%;text-align:center}
-.toast.show{opacity:1;transform:translate(-50%,0)}
+/* hub */
+#hub{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;pointer-events:none;overflow-y:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
+#hub>*{pointer-events:auto}
+#hub .spacer{flex:1;min-height:150px;pointer-events:none}
+#hub header{text-align:center;color:#fff}
+#hub h1{margin:0;font-size:clamp(44px,12vw,78px);line-height:.92;color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;text-shadow:0 6px 0 var(--ink)}
+#hub h1 span{color:var(--pale)}
+#hub header p{margin:10px auto 0;max-width:36ch;font-weight:600;font-size:15px;line-height:1.4;text-shadow:0 2px 0 var(--ink)}
+.games{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:900px;width:100%;margin:0 auto 12px}
+.gcard{background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:0 6px 0 var(--ink);padding:12px 14px;text-align:left;display:flex;gap:12px;align-items:center;transition:transform .1s,box-shadow .1s}
+.gcard:hover{transform:translateY(-3px);box-shadow:0 9px 0 var(--ink)}
+.gcard:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.gcard img{width:64px;height:64px;flex:none;border-radius:50%;background:var(--soft);border:3px solid var(--ink)}
+.gcard h3{margin:0;font-size:21px;line-height:1}
+.gcard p{margin:4px 0 0;font-size:12.5px;color:#47527a;line-height:1.35}
+.gcard small{display:block;margin-top:5px;font-weight:700;color:var(--blue);font-size:12px}
+.pick{max-width:900px;width:100%;margin:0 auto;color:#fff}
+.pick b{font-size:12px;letter-spacing:.8px;text-transform:uppercase;text-shadow:0 2px 0 var(--ink);display:block;margin:0 0 6px 4px}
+.pickRow{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 8px;scrollbar-width:none}
+.pickRow::-webkit-scrollbar{display:none}
+.pickRow button{flex:none;width:52px;height:52px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);padding:0;overflow:hidden}
+.pickRow button img{width:100%;height:100%;display:block}
+.pickRow button[aria-pressed="true"]{background:var(--mid);transform:translateY(-3px) scale(1.1);box-shadow:0 7px 0 var(--ink)}
+.foot{max-width:60ch;margin:6px auto 0;text-align:center;color:#c9d4f5;font-size:12px;line-height:1.5}
+@media(max-width:720px){.games{grid-template-columns:1fr;gap:9px}.gcard{padding:9px 12px}.gcard img{width:50px;height:50px}.gcard h3{font-size:19px}#hub .spacer{min-height:90px}}
 
-/* sheets */
-.sheet{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:20}
-.sheet.open{display:flex}
-.sheetHead{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
-.sheetHead h2{margin:0;font-size:24px;flex:1}
-.back{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-size:18px}
-.sheetBody{flex:1;overflow:auto;padding:16px}
-.prog{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:4px 0 16px}
-.prog i{display:block;height:100%;background:var(--accent)}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px 6px 10px;text-align:center}
-.card img{width:78%;aspect-ratio:1;display:block;margin:0 auto 4px}
-.card.unk img{filter:brightness(0) opacity(.28)}
-.card b{display:block;font-size:13px}
-.card small{color:var(--muted);font-size:11px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
-.row p{margin:2px 0 0;color:var(--muted);font-size:13px;max-width:34ch;line-height:1.4}
-.sw{width:50px;height:30px;border-radius:30px;background:var(--line);position:relative;flex:none;transition:.2s}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.sw[aria-checked="true"]{background:var(--teal)}
-.sw[aria-checked="true"]::after{left:23px}
-.btn{background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:16px;padding:13px 20px;font-size:16px}
-.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
-.btn.sm{padding:8px 14px;font-size:14px;border-radius:12px}
+/* modal */
+#modal{position:fixed;inset:0;z-index:30;background:rgba(2,4,11,.72);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+#mCard{background:#fff;border:4px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:22px 20px 20px;width:min(440px,100%);max-height:90vh;overflow:auto;text-align:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+#mCard h2{margin:0 0 6px;font-size:30px;line-height:1.05}
+#mCard p{margin:6px 0;line-height:1.5}
+#mCard .how{text-align:left;background:var(--soft);border:2px solid var(--ink);border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;margin:12px 0 16px}
+#mCard .how li{margin:3px 0}
+#mCard .how ul{margin:0;padding-left:18px}
+#mCard .btns{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.stars{font-size:40px;letter-spacing:4px;color:var(--navy);-webkit-text-stroke:2px var(--ink);line-height:1}
+.stars .off{color:#fff}
+.big{font-family:"Fredoka",system-ui,sans-serif;font-size:54px;line-height:1;margin:6px 0 0!important}
+.slist{text-align:left;margin:14px 0 4px;display:flex;flex-direction:column;gap:8px}
+.slist h4{margin:0 0 2px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:#47527a}
+.stItem{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink);background:var(--soft);border:2px solid var(--ink);border-radius:14px;padding:8px 10px}
+.stItem img{width:38px;height:38px;flex:none;border-radius:50%;background:#fff}
+.stItem span{flex:1;min-width:0;line-height:1.25}
+.stItem b{font-size:13.5px;display:block}
+.stItem small{font-size:11.5px;color:#47527a}
+.stItem i{font-style:normal;font-weight:700}
+.disc{color:#47527a;font-size:11.5px;line-height:1.45;margin:10px 0 0!important}
 
-/* start */
-#start{position:absolute;inset:0;z-index:50;background:linear-gradient(170deg,#02040b 0%,#0a1f5c 62%,#14307a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;gap:14px;overflow:auto}
-#start.hide{display:none}
-.trio{display:flex;gap:2px;align-items:flex-end;margin-bottom:6px}
-.trio img{width:min(30vw,128px);animation:bob 3s ease-in-out infinite}
-.trio img:nth-child(2){width:min(36vw,150px);animation-delay:-1s}
-.trio img:nth-child(3){animation-delay:-2s}
-@keyframes bob{50%{transform:translateY(-10px)}}
-#start h1{font-size:clamp(40px,12vw,64px);line-height:.95;margin:0}
-#start h1 span{color:#fff;text-shadow:0 0 28px rgba(111,143,230,.85)}
-#start .btn:not(.ghost){background:#fff;color:#0a1f5c}
-#start .egg0{font-weight:600;opacity:1;max-width:32ch;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:9px 14px;font-size:14px}
-#start p{margin:0;max-width:34ch;opacity:.86;line-height:1.5}
-#start .btn{width:min(320px,100%)}
-#start .btn.ghost{color:#fff;border-color:rgba(255,255,255,.35)}
-#start small{opacity:.6;max-width:36ch;line-height:1.4}
-
-/* encounter */
-.enc{position:absolute;inset:0;z-index:40;background:#000;display:none;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.enc.open{display:block}
-.enc video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-.enc.cam video{display:block}
-.scene{position:absolute;inset:0}
-.enc.cam .scene{display:none}
-.sky{position:absolute;inset:0;background:linear-gradient(#02040b,#0a1f5c 55%,#14307a 62%)}
-.ground{position:absolute;left:0;right:0;bottom:0;height:42%;background:
-  repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 2px,transparent 2px 60px),
-  linear-gradient(#0a1030,#02040b)}
-.cloud{position:absolute;width:120px;height:34px;border-radius:40px;background:#fff;opacity:.14;filter:blur(2px)}
-.encTop{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:center;gap:10px;z-index:6}
-.roundBtn{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:18px;backdrop-filter:blur(6px)}
-.encInfo{flex:1;background:rgba(0,0,0,.45);color:#fff;border-radius:16px;padding:8px 14px;backdrop-filter:blur(6px);display:flex;flex-direction:column}
-.encInfo b{font-size:18px}
-.encInfo span{font-size:12px;opacity:.85}
-.encTop .chip{background:rgba(0,0,0,.45);color:#fff;border-color:transparent}
-#creature{position:absolute;left:0;top:0;width:var(--cs,220px);height:var(--cs,220px);will-change:transform;pointer-events:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35))}
-#creature svg{width:100%;height:100%;display:block}
-#shadow{position:absolute;left:0;top:0;width:150px;height:26px;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(5px);pointer-events:none;will-change:transform}
-#ring{position:absolute;left:0;top:0;border-radius:50%;border:5px solid var(--teal);pointer-events:none;will-change:transform,width,height;box-shadow:0 0 14px rgba(255,255,255,.35)}
-#ringBase{position:absolute;left:0;top:0;border-radius:50%;border:2px dashed rgba(255,255,255,.55);pointer-events:none}
-#encMsg{position:absolute;left:50%;top:26%;transform:translate(-50%,0);font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:32px;color:#fff;text-shadow:0 3px 12px rgba(0,0,0,.55);opacity:0;transition:.25s;pointer-events:none;z-index:7;text-align:center;white-space:nowrap}
-#encMsg.show{opacity:1;top:22%}
-#orbHint{position:absolute;left:0;right:0;bottom:178px;text-align:center;color:#fff;font-weight:600;font-size:13px;text-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none}
-.orb{position:absolute;left:50%;bottom:78px;width:68px;height:68px;margin-left:-34px;border-radius:50%;touch-action:none;z-index:8;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
-.orb svg,.fly svg{width:100%;height:100%;display:block}
-.fly{position:absolute;width:68px;height:68px;z-index:9;pointer-events:none;will-change:transform}
-.fly.win{filter:drop-shadow(0 0 16px #fff) drop-shadow(0 0 30px #6f8fe6)}
-.encBottom{position:absolute;left:12px;right:12px;bottom:18px;display:flex;align-items:center;justify-content:space-between;z-index:6}
-.encBottom .chip{background:rgba(0,0,0,.5);color:#fff;border-color:transparent}
-.pill{background:rgba(255,255,255,.92);color:#0a1f5c;font-weight:700;border-radius:999px;padding:11px 18px;font-size:14px}
-.result{position:absolute;inset:0;background:rgba(2,4,11,.86);display:none;align-items:center;justify-content:center;z-index:12;padding:20px;backdrop-filter:blur(4px)}
-.result.open{display:flex}
-.resCard{background:var(--surface);color:var(--ink);border-radius:28px;padding:22px 22px 20px;text-align:center;width:min(340px,100%);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
-@keyframes pop{from{transform:scale(.6);opacity:0}}
-.resCard svg{width:170px;height:170px}
-.resCard h3{margin:0;font-size:32px}
-.resCard p{margin:4px 0 14px;color:var(--muted)}
-.resStats{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
-.resStats .chip{box-shadow:none}
-
-
-/* issues / easter eggs */
-.card{position:relative;font:inherit;color:inherit;width:100%}
-.card img{border-radius:50%;background:var(--soft)}
-.card.unk img{background:none;border-radius:0}
-.newDot{position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--surface)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
-.chips:empty{display:none}
-.fchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-weight:600;font-size:13px}
-.fchip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-.dexSub{margin:-6px 0 12px;color:var(--muted);font-size:13px;font-weight:600}
-.note{color:var(--muted);font-size:12.5px;line-height:1.45;margin:0 0 12px}
-.note:empty{display:none}
-.egg{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin:0 0 12px;text-align:left}
-.egg small{display:block;font-size:10.5px;letter-spacing:.8px;color:var(--muted);font-weight:700;margin-bottom:3px}
-.egg b{font-size:14px;line-height:1.3}
-.issueHero{display:flex;flex-direction:column;align-items:center;gap:6px;background:linear-gradient(165deg,#02040b,#0a1f5c 70%,#14307a);color:#fff;border-radius:24px;padding:18px 16px 16px;margin-bottom:16px}
-.issueHero svg{width:150px;height:150px;display:block;filter:drop-shadow(0 0 10px rgba(255,255,255,.35))}
-.issueHero h3{margin:0;font-size:22px}
-.tagChip{background:#fff;color:#0a1f5c;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700}
-.eyebrow{margin:0;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
-.issueTitle{font-size:24px;line-height:1.15;margin:6px 0 12px}
-.statBox{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;background:var(--accent);color:var(--accent-ink);border-radius:18px;padding:14px 16px;margin:0 0 14px}
-.statBox b{font-size:34px;line-height:1}
-.statBox span{font-size:13px;line-height:1.35;flex:1;min-width:140px}
-.issueText{line-height:1.6;font-size:15.5px;margin:0 0 16px}
-.srcs{display:flex;flex-direction:column;gap:8px;margin:0 0 18px}
-.srcs b{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
-.srcs a{color:var(--ink);font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px;word-break:break-word}
-.fc{border:2px solid var(--ink);border-radius:20px;padding:14px;margin:0 0 14px}
-.fc p{margin:6px 0 12px;line-height:1.5}
-.fcBtns{display:flex;gap:10px}
-.fcBtns .btn{flex:1}
-.fcBtns .btn[disabled]{opacity:.45;cursor:default}
-.fcOut{margin-top:12px;font-size:14px;line-height:1.5}
-.fcOut:empty{display:none}
-.disc{color:var(--muted);font-size:12px;line-height:1.5;margin:0 0 8px}
-.issueActions{margin:0 0 14px}
-
-@media (prefers-reduced-motion: reduce){
-  .trio img{animation:none}
-  .resCard{animation:none}
-}
+@media (prefers-reduced-motion: reduce){#prompt.bump,#learn,#mCard,.pop{animation:none}.gcard{transition:none}}
 </style>
 </head>
 <body>
-<div id="app">
-  <canvas id="map" aria-label="Map"></canvas>
+<canvas id="c" aria-label="3D game view"></canvas>
 
-  <div class="hud">
-    <div class="chip lvl">
-      <div class="lvlBadge display" id="lvl">1</div>
-      <div class="xpWrap"><div class="xpTxt" id="xpTxt">0 / 250 xp</div><div class="xpBar"><i id="xpFill"></i></div></div>
-    </div>
-    <div class="spacer"></div>
-    <div class="chip" id="modeChip"><span class="dot" id="modeDot"></span><span id="modeTxt">Tap to walk</span></div>
-    <div class="chip" id="orbChip" aria-label="Orbs"><svg width="18" height="18" viewBox="0 0 68 68"><circle cx="34" cy="34" r="30" style="fill:var(--accent)"/><circle cx="34" cy="34" r="12" style="fill:var(--surface)"/></svg><span id="orbCount">15</span></div>
-  </div>
+<main id="hub">
+  <header>
+    <h1 class="display">JourKnows<br><span>Arcade</span></h1>
+    <p>Three 3D minigames powered by this month's real Philippine stories. Tap a Journ to say hi.</p>
+  </header>
+  <div class="spacer"></div>
+  <section class="games" id="games" aria-label="Minigames"></section>
+  <section class="pick"><b>Your Journ</b><div class="pickRow" id="pickRow" role="group" aria-label="Choose your Journ"></div></section>
+  <p class="foot" id="foot"></p>
+</main>
 
-  <div class="nav">
-    <button class="navBtn" id="btnDex" aria-label="Open Journdex">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M8 17h8"/></svg>
-      Journdex
-    </button>
-    <button class="navBtn main" id="btnCenter" aria-label="Recenter map">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>
-      Recenter
-    </button>
-    <button class="navBtn" id="btnSet" aria-label="Open settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-      Settings
-    </button>
-  </div>
-
-  <section class="sheet" id="dex" aria-label="Journdex">
-    <header class="sheetHead"><button class="back" data-close aria-label="Close">←</button><h2 class="display">Journdex</h2><span class="chip" id="dexCount" style="box-shadow:none"></span></header>
-    <div class="sheetBody">
-      <div class="prog"><i id="dexProg" style="width:0"></i></div>
-      <p class="dexSub" id="dexSub"></p>
-      <div class="chips" id="edBar" role="group" aria-label="Edition"></div>
-      <div class="chips" id="dexFilter" role="group" aria-label="Filter">
-        <button class="fchip on" data-f="all" aria-pressed="true">All</button>
-        <button class="fchip" data-f="caught" aria-pressed="false">Caught</button>
-        <button class="fchip" data-f="unread" aria-pressed="false">Unread stories</button>
-      </div>
-      <p class="note" id="edNote"></p>
-      <div class="grid" id="dexGrid"></div>
-    </div>
-  </section>
-
-  <section class="sheet" id="settings" aria-label="Settings">
-    <header class="sheetHead"><button class="back" data-close aria-label="Close">←</button><h2 class="display">Settings</h2></header>
-    <div class="sheetBody">
-      <div class="row"><div><b>Real GPS</b><p>Walk in real life and the map follows you. Off means you tap the map to walk.</p></div><button class="sw" id="swGps" role="switch" aria-checked="false" aria-label="Real GPS"></button></div>
-      <div class="row"><div><b>AR camera</b><p>Show your camera behind a Journ during encounters. Move your phone to look around.</p></div><button class="sw" id="swCam" role="switch" aria-checked="false" aria-label="AR camera"></button></div>
-      <div class="row"><div><b>Monthly edition</b><p id="edInfo">Every Journ hides a real Philippine story. New stories drop every month.</p></div></div>
-      <div class="row"><div><b>Reset progress</b><p>Clears your Journdex, level and orbs on this device.</p></div><button class="btn ghost sm" id="btnReset">Reset</button></div>
-      <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:18px">Journ Stops (the glowing diamonds) refill your orbs. Your position and camera never leave this device.</p>
-    </div>
-  </section>
-
-  <section class="sheet" id="issue" aria-label="Story">
-    <header class="sheetHead"><button class="back" data-close aria-label="Close">←</button><h2 class="display">Story</h2></header>
-    <div class="sheetBody" id="issueBody"></div>
-  </section>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <div class="enc" id="enc">
-    <video id="encVideo" playsinline muted autoplay></video>
-    <div class="scene"><div class="sky"></div><div class="cloud" style="top:14%;left:8%"></div><div class="cloud" style="top:24%;right:6%;width:90px"></div><div class="ground"></div></div>
-    <div class="encTop">
-      <button class="roundBtn" id="encRun" aria-label="Run away">✕</button>
-      <div class="encInfo"><b class="display" id="encName"></b><span id="encMeta"></span></div>
-      <span class="chip" id="arBadge">Virtual</span>
-    </div>
-    <div id="shadow"></div>
-    <div id="ringBase"></div>
-    <div id="ring"></div>
-    <div id="creature"></div>
-    <div id="encMsg" class="display"></div>
-    <div id="orbHint">Flick the orb up at the Journ. Throw when the ring is small.</div>
-    <button class="orb" id="orb" aria-label="Journ Orb"></button>
-    <div class="encBottom"><span class="chip"><span id="encOrbs">0</span> orbs</span><button class="pill" id="auto">Auto-throw</button></div>
-    <div class="result" id="result"></div>
-  </div>
-
-  <div id="start">
-    <div class="trio" id="trio"></div>
-    <h1 class="display">JourKnows<br><span>GO</span></h1>
-    <p>Hunt wild Journs on the map, then meet them through your camera and flick an orb to catch them.</p>
-    <p class="egg0">Every Journ hides a real Philippine story. New edition every month.</p>
-    <button class="btn" id="startAR">Start with GPS and camera</button>
-    <button class="btn ghost" id="startDemo">Try it here, tap to walk</button>
-    <small>Permissions are optional. Without them you explore a demo map and a virtual backdrop.</small>
-  </div>
+<div id="hud" hidden>
+  <button class="cbtn round" id="hBack" aria-label="Back to arcade">←</button>
+  <div class="chip" id="hScore">0</div>
+  <div class="chip" id="hMid"></div>
+  <div class="hsp"></div>
+  <div class="chip" id="hHearts" aria-label="Lives"></div>
+  <button class="cbtn round" id="hMute" aria-label="Toggle sound">♪</button>
 </div>
+<div id="prompt" role="status" hidden><small id="pTag"></small><b id="pText"></b><span id="pSub"></span></div>
+<div id="learn" role="status" hidden></div>
+<div id="pops"></div>
+<div id="modal" hidden><div id="mCard" role="dialog" aria-modal="true"></div></div>
 
-<!--
-  MONTHLY UPDATE (editors): add a new edition below, keyed "YYYY-MM", with the same 12 Journ names.
-  The game shows the edition for the current month, or the latest one published if the new month is not filed yet.
-  Each Journ needs: title, stat, statLabel, body (short, neutral, dated), sources [{name,url}], and an optional
-  check {claim, answer: true|false, why}. Keep old editions in place: they become the archive in the Journdex.
-  Verify every figure against the linked sources before publishing.
--->
-<script id="issueData" type="application/json">
-{
-  "2026-10": {
-    "label": "October 2026",
-    "asOf": "Oct. 14, 2026",
-    "issues": {
-      "Solarix": {
-        "title": "Impeachment trial narrows to one article",
-        "stat": "1 of 4",
-        "statLabel": "articles of impeachment reported still standing against VP Sara Duterte as of Oct. 14",
-        "body": "House prosecutors dropped the bribery article earlier this month, saying they had presented enough evidence on the others and that the move was about their timetable, not the strength of the case. Reports on Oct. 13 and 14 say the Senate impeachment court approved dropping three of the four articles, leaving the unexplained wealth article. Duterte's camp says the withdrawals show the allegations lacked basis. The trial continues.",
-        "sources": [
-          {
-            "name": "Daily Tribune: prosecutors to rest case (Oct. 9)",
-            "url": "https://tribune.net.ph/2026/10/09/house-prosecution-panel-to-rest-vp-sara-impeachment-case-on-article-ii"
-          },
-          {
-            "name": "AFP via Courthouse News: bribery charge dropped",
-            "url": "https://courthousenews.com/prosecutors-drop-bribery-charge-in-philippine-vp-impeachment-trial/"
-          },
-          {
-            "name": "Inquirer.net front page (Oct. 14 headlines)",
-            "url": "https://newsinfo.inquirer.net/"
-          }
-        ],
-        "check": {
-          "claim": "As of Oct. 14, the Senate impeachment court is still hearing all four original articles.",
-          "answer": false,
-          "why": "Reports say the court approved dropping three of the four, leaving the unexplained wealth article."
-        }
-      },
-      "Zapnub": {
-        "title": "Meralco told to refund P2.64 billion",
-        "stat": "P2.64B",
-        "statLabel": "net refund ordered by the Energy Regulatory Commission",
-        "body": "The ERC found Meralco collected about P5.36 billion above its approved distribution charges from January to June 2026. After adjustments, the net P2.64 billion is to be returned over roughly six months, shown as a separate bill line. The average rate is P0.1020 per kWh and P0.1733 for residential customers. The refund is provisional, with hearings set for Oct. 16 to 23.",
-        "sources": [
-          {
-            "name": "GMA News: ERC tells Meralco to refund",
-            "url": "https://www.gmanetwork.com/news/money/companies/1005587/erc-tells-meralco-to-refund-p2-64-billion-to-customers/story/"
-          },
-          {
-            "name": "Daily Tribune: Meralco bills to ease",
-            "url": "https://tribune.net.ph/2026/10/12/meralco-bills-to-ease-on-p264-b-refund"
-          }
-        ],
-        "check": {
-          "claim": "The Meralco refund order is final and cannot change.",
-          "answer": false,
-          "why": "The ERC called it provisional, with hearings scheduled for Oct. 16 to 23."
-        }
-      },
-      "Fluffum": {
-        "title": "Haze keeps air quality in the red",
-        "stat": "AQI 215",
-        "statLabel": "Metro Cebu reading on Sept. 2, in the 'acutely unhealthy' range (DENR-EMB 7)",
-        "body": "Environment officials have linked the haze to fires in Kalimantan, Indonesia, carried by prevailing winds. On Sept. 1, ten Metro Manila cities were rated 'very unhealthy', and several local governments suspended face-to-face classes in September. Inquirer.net headlines on Oct. 14 reported more suspensions and a 'very unhealthy' rating at Ateneo de Zamboanga.",
-        "sources": [
-          {
-            "name": "Philstar: toxic haze halts classes (Sept. 3)",
-            "url": "https://www.philstar.com/nation/2026/09/03/2553765/toxic-haze-halts-classes"
-          },
-          {
-            "name": "GMA News: haze reached NCR, Calabarzon, Mimaropa",
-            "url": "https://www.gmanetwork.com/news/topstories/nation/1000608/haze-possibly-from-indonesia-fires-reached-ncr-calabarzon-mimaropa/story/"
-          },
-          {
-            "name": "Inquirer.net front page (Oct. 14 headlines)",
-            "url": "https://newsinfo.inquirer.net/"
-          }
-        ],
-        "check": {
-          "claim": "DENR-EMB said the haze was possibly linked to fires in Kalimantan, Indonesia.",
-          "answer": true,
-          "why": "That is what the bureau said in its advisory, citing transboundary haze carried by prevailing winds."
-        }
-      },
-      "Dreamoo": {
-        "title": "House votes to bar kids under 13 from social media",
-        "stat": "Under 13",
-        "statLabel": "age covered by the House-approved ban (Oct. 12)",
-        "body": "The House voted overwhelmingly for a measure banning children under 13 from social media platforms. The Senate's version is stricter, barring anyone under 18 from creating accounts. President Marcos said he is studying the Senate bill and warned that a blanket ban could lead children to hide their online activity, leaving them more vulnerable to grooming and abuse.",
-        "sources": [
-          {
-            "name": "Reuters via The Star: lower house approves bill",
-            "url": "https://www.thestar.com.my/aseanplus/aseanplus-news/2026/10/12/philippine-lower-house-approves-bill-restricting-minors039-social-media-access"
-          }
-        ],
-        "check": {
-          "claim": "The House and Senate versions of the bill set the same age limit.",
-          "answer": false,
-          "why": "The House version covers under 13. The Senate's is stricter and bars anyone under 18 from creating accounts."
-        }
-      },
-      "Frostik": {
-        "title": "Water cannon delays a medical evacuation at Ayungin Shoal",
-        "stat": "~10 hrs",
-        "statLabel": "delay the Philippine Coast Guard reported on the Oct. 8 evacuation",
-        "body": "The Coast Guard said a China Coast Guard cutter switched on a water cannon and closed to about 400 yards of the BRP Cabra as it went to retrieve an injured Navy serviceman from BRP Sierra Madre. The stream did not hit the ship. China's coast guard said it 'allowed' the evacuation on humanitarian grounds. Manila also reported 101 Chinese vessels near contested features in September, nearly double August.",
-        "sources": [
-          {
-            "name": "South China Morning Post: Beijing and Manila trade blame",
-            "url": "https://scmp.com/news/china/diplomacy/article/3370306/china-and-philippines-blame-each-other-over-south-china-sea-medical-mission"
-          },
-          {
-            "name": "The Maritime Executive: video of the incident",
-            "url": "https://maritime-executive.com/article/video-china-coast-guard-uses-water-cannon-during-philippine-medevac"
-          }
-        ],
-        "check": {
-          "claim": "The water cannon stream hit the BRP Cabra during the Oct. 8 evacuation.",
-          "answer": false,
-          "why": "The Coast Guard said the stream did not hit the ship, though the encounter delayed the mission."
-        }
-      },
-      "Embit": {
-        "title": "More families say they are poor",
-        "stat": "16.8M",
-        "statLabel": "families rated themselves poor in SWS's Sept. 21 to 27 survey",
-        "body": "Self-rated poverty rose to 55 percent from 49 percent in June, according to Social Weather Stations. Self-rated food poverty climbed from 36 to 44 percent, about 13.3 million families. SWS said the six-point rise was led by a 10-point jump in Balance Luzon. The survey interviewed 1,500 adults face to face.",
-        "sources": [
-          {
-            "name": "Manila Bulletin: 16.8 million families consider themselves poor",
-            "url": "https://mb.com.ph/2026/10/13/168-million-families-consider-themselves-poor-in-q3-2026-sws"
-          },
-          {
-            "name": "Daily Tribune: self-rated poverty rises",
-            "url": "https://tribune.net.ph/2026/10/13/sws-self-rated-poverty-rises-to-168-million-families-in-q3"
-          }
-        ],
-        "check": {
-          "claim": "Self-rated poverty fell between June and September 2026.",
-          "answer": false,
-          "why": "It rose from 49 percent in June to 55 percent in September."
-        }
-      },
-      "Lunaraw": {
-        "title": "A China-remittance claim reaches the impeachment trial",
-        "stat": "P319.33M",
-        "statLabel": "remittances from China and Hong Kong to Cale88 Foods, per AMLC testimony on Oct. 5",
-        "body": "Anti-Money Laundering Council Executive Director Ronel Buenaventura testified that Cale88 Foods Corp., a company linked to the vice president's husband, received the remittances. President Marcos said Oct. 11 that such funding would be a national security matter if proven. Duterte says the claim lacks sufficient basis and could strain ties with China. Wrongdoing has not been established.",
-        "sources": [
-          {
-            "name": "Daily Tribune: Duterte hits Marcos over China funding",
-            "url": "https://tribune.net.ph/2026/10/12/inday-hits-marcos-over-china-funding-alleges-security-threat"
-          },
-          {
-            "name": "Asia News Network: Marcos on China-linked funds",
-            "url": "https://asianews.network/?p=307056"
-          }
-        ],
-        "check": {
-          "claim": "Reports say wrongdoing over the China-linked remittances has been established.",
-          "answer": false,
-          "why": "Coverage notes the allegations have drawn scrutiny but wrongdoing has not been established."
-        }
-      },
-      "Puddlo": {
-        "title": "Metro Manila's water allocation is cut for El Niño",
-        "stat": "44 m³/s",
-        "statLabel": "MWSS allocation from October, down from the usual 50 to 53 (NWRB)",
-        "body": "The National Water Resources Board said it is conserving supply ahead of a stronger El Niño. Angat Dam, Metro Manila's main source, fell below its 160-meter critical level earlier this year, and the water concessionaires say they have added supplemental sources and expanded storage.",
-        "sources": [
-          {
-            "name": "Daily Tribune: government braces for strong El Niño",
-            "url": "https://tribune.net.ph/2026/09/30/govt-braces-for-strong-el-ni%C3%B1o"
-          },
-          {
-            "name": "Philstar: government scrambles to respond (July)",
-            "url": "https://www.philstar.com/business/2026/07/27/2544851/government-scrambles-respond-looming-el-nio"
-          }
-        ],
-        "check": {
-          "claim": "Metro Manila's water allocation was raised starting in October.",
-          "answer": false,
-          "why": "The NWRB lowered it to 44 cubic meters per second from the usual 50 to 53."
-        }
-      },
-      "Leafling": {
-        "title": "Farms brace for a 'very strong' El Niño",
-        "stat": "P10B",
-        "statLabel": "extra El Niño funding the Agriculture department is seeking",
-        "body": "PAGASA warned on Sept. 23 that a strong El Niño is already active and is expected to intensify into a very strong one between September and December. The department wants P10 billion on top of the P6.2 billion already released for fuel and fertilizer aid. The National Irrigation Administration is also planning groundwater-fed, solar-powered pump irrigation.",
-        "sources": [
-          {
-            "name": "Daily Tribune: government braces for strong El Niño",
-            "url": "https://tribune.net.ph/2026/09/30/govt-braces-for-strong-el-ni%C3%B1o"
-          },
-          {
-            "name": "Philstar: government scrambles to respond (July)",
-            "url": "https://www.philstar.com/business/2026/07/27/2544851/government-scrambles-respond-looming-el-nio"
-          }
-        ],
-        "check": {
-          "claim": "PAGASA said on Sept. 23 that a strong El Niño was already active.",
-          "answer": true,
-          "why": "It also said the event was expected to intensify into a very strong El Niño during September to December."
-        }
-      },
-      "Pebblit": {
-        "title": "House passes the P7.2-trillion 2027 budget",
-        "stat": "281 to 13",
-        "statLabel": "House vote on third reading (one abstention), reported Oct. 12",
-        "body": "The House approved HB 10858, which restores P107.4 billion for flood control projects. Minority lawmakers questioned how funds were allocated, and Rep. Antonio Tinio cited 6,212 projects worth P180.5 billion that he said were added during House deliberations. The bill now goes to the Senate, where allocations can still change.",
-        "sources": [
-          {
-            "name": "Daily Tribune: House approves 2027 budget",
-            "url": "https://tribune.net.ph/2026/10/12/house-approves-p72-trillion-2027-budget-amid-minority-objections"
-          },
-          {
-            "name": "Manila Bulletin: 2027 budget turned over to House",
-            "url": "https://mb.com.ph/2026/08/11/house-gets-hands-on-record-p72-trillion-2027-budget-eyes-continued-transparency"
-          }
-        ],
-        "check": {
-          "claim": "The 2027 budget bill is already signed into law.",
-          "answer": false,
-          "why": "The House passed it on third reading. It still goes through Senate deliberations before enactment."
-        }
-      },
-      "Boolet": {
-        "title": "Flood control scandal: cases move, questions remain",
-        "stat": "P611.4M",
-        "statLabel": "returned to the DOJ as of March 2026 in the flood control probe",
-        "body": "Hearings in late 2025 revealed billions of pesos lost to 'ghost' flood control projects, and the Independent Commission for Infrastructure was formed that September. In May 2026, Sen. Jinggoy Estrada and former DPWH Secretary Manuel Bonoan were charged with plunder and graft. The Philippine Center for Investigative Journalism notes the 2026 budget enacted after the scandal sharply cut flood control funding.",
-        "sources": [
-          {
-            "name": "PhilSTAR Life: what has happened since the 2025 SONA",
-            "url": "https://philstarlife.com/amp/article/609533-what-has-happened-since-marcos-2025-sona"
-          },
-          {
-            "name": "PCIJ: one year after the flood control speech",
-            "url": "https://pcij.org/2026/07/26/one-year-after-the-flood-control-speech/"
-          }
-        ],
-        "check": {
-          "claim": "PCIJ reports that the 2026 budget enacted after the scandal drastically reduced flood control funding.",
-          "answer": true,
-          "why": "That is what PCIJ's July 2026 review says, though the House's 2027 budget bill restores P107.4 billion."
-        }
-      },
-      "Glimmoth": {
-        "title": "What a trust survey does and doesn't tell us",
-        "stat": "56% vs 36%",
-        "statLabel": "strong trust in VP Duterte vs. President Marcos, SWS Sept. 21 to 27",
-        "body": "A Social Weather Stations survey of 1,500 adults found 56 percent expressing strong trust in Vice President Duterte and 36 percent in President Marcos. Marcos's net satisfaction rating fell further into negative territory. Surveys capture opinion at one moment. They do not decide the facts of the cases before the Senate.",
-        "sources": [
-          {
-            "name": "Daily Tribune: SWS trust and satisfaction ratings",
-            "url": "https://tribune.net.ph/2026/10/13/dutertes-56-trust-dwarfs-marcos-36-as-presidents-satisfaction-rating-sinks"
-          }
-        ],
-        "check": {
-          "claim": "The SWS trust survey interviewed 1,500 adults face to face.",
-          "answer": true,
-          "why": "The Sept. 21 to 27 survey used face-to-face interviews with 1,500 adults nationwide."
-        }
-      }
-    }
-  }
-}
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (()=>{
 'use strict';
 const $=(s,r=document)=>r.querySelector(s);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ease=k=>1-Math.pow(1-k,3);
+const REDUCED=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- species (all original) ---------- */
-const SPECIES=[
- {id:0,name:'Leafling',type:'Agriculture',c:'#12307a',c2:'#e8edff',kind:'leaf',rar:1,rate:.55},
- {id:1,name:'Embit',type:'Economy',c:'#0a1030',c2:'#c9d4f5',kind:'flame',rar:1,rate:.5},
- {id:2,name:'Puddlo',type:'Water',c:'#1f48a8',c2:'#ffffff',kind:'drop',rar:1,rate:.55},
- {id:3,name:'Zapnub',type:'Energy',c:'#f4f6ff',c2:'#c9d4f5',kind:'bolt',rar:2,rate:.42},
- {id:4,name:'Pebblit',type:'Budget',c:'#5a6ca8',c2:'#dfe6fa',kind:'rock',rar:1,rate:.52},
- {id:5,name:'Fluffum',type:'Environment',c:'#c9d4f5',c2:'#ffffff',kind:'cloud',rar:1,rate:.5},
- {id:6,name:'Glimmoth',type:'Public Opinion',c:'#2a4fae',c2:'#d6e0ff',kind:'moth',rar:2,rate:.4},
- {id:7,name:'Boolet',type:'Accountability',c:'#0d2566',c2:'#aebce8',kind:'ghost',rar:2,rate:.38},
- {id:8,name:'Frostik',type:'Sea Dispute',c:'#a9bdf0',c2:'#f4f6ff',kind:'ice',rar:2,rate:.38},
- {id:9,name:'Dreamoo',type:'Online Safety',c:'#e6ebfb',c2:'#ffffff',kind:'moon',rar:3,rate:.24},
- {id:10,name:'Lunaraw',type:'Security',c:'#050813',c2:'#5a7bd0',kind:'wolf',rar:3,rate:.2,eye:'#4f74d6'},
- {id:11,name:'Solarix',type:'Politics',c:'#0b2a6f',c2:'#f4f6ff',kind:'sun',rar:4,rate:.11}
+if(!window.THREE){
+  document.body.insertAdjacentHTML('beforeend','<div style="position:fixed;inset:0;display:grid;place-items:center;color:#fff;text-align:center;padding:24px;font-family:system-ui">The 3D engine could not load. Check your connection and reload.</div>');
+  return;
+}
+
+/* ---------- save ---------- */
+const KEY='jourknows-arcade-v1';
+let S={best:{dash:0,match:0,whack:0},pick:1,mute:false};
+try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');S=Object.assign(S,raw);S.best=Object.assign({dash:0,match:0,whack:0},raw.best||{});}catch(e){}
+const saveS=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+
+/* ---------- sound ---------- */
+let AC=null;
+function sfx(f,type='sine',d=.12,v=.12,to){
+  if(S.mute)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime;
+    o.type=type;o.frequency.setValueAtTime(f,n);
+    if(to)o.frequency.exponentialRampToValueAtTime(to,n+d);
+    g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(n+d+.02);
+  }catch(e){}
+}
+const SND={
+  ok:()=>{sfx(520,'triangle',.1,.14,780);setTimeout(()=>sfx(780,'triangle',.16,.12,1040),90);},
+  bad:()=>sfx(240,'sawtooth',.26,.09,110),
+  flip:()=>sfx(420,'sine',.09,.1,640),
+  coin:()=>sfx(900,'square',.07,.04,1300),
+  pop:()=>sfx(300,'sine',.14,.12,760),
+  hit:()=>sfx(170,'square',.13,.12,70),
+  win:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>sfx(f,'triangle',.2,.12),i*110));}
+};
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}};
+
+/* ---------- species ---------- */
+const SP=[
+ {id:0,name:'Leafling',type:'Agriculture',c:'#12307a',c2:'#e8edff',kind:'leaf'},
+ {id:1,name:'Embit',type:'Economy',c:'#0a1030',c2:'#c9d4f5',kind:'flame'},
+ {id:2,name:'Puddlo',type:'Water',c:'#1f48a8',c2:'#ffffff',kind:'drop'},
+ {id:3,name:'Zapnub',type:'Energy',c:'#f4f6ff',c2:'#c9d4f5',kind:'bolt'},
+ {id:4,name:'Pebblit',type:'Budget',c:'#5a6ca8',c2:'#dfe6fa',kind:'rock'},
+ {id:5,name:'Fluffum',type:'Environment',c:'#c9d4f5',c2:'#ffffff',kind:'cloud'},
+ {id:6,name:'Glimmoth',type:'Public Opinion',c:'#2a4fae',c2:'#d6e0ff',kind:'moth'},
+ {id:7,name:'Boolet',type:'Accountability',c:'#0d2566',c2:'#aebce8',kind:'ghost'},
+ {id:8,name:'Frostik',type:'Sea Dispute',c:'#a9bdf0',c2:'#f4f6ff',kind:'ice'},
+ {id:9,name:'Dreamoo',type:'Online Safety',c:'#e6ebfb',c2:'#ffffff',kind:'moon'},
+ {id:10,name:'Lunaraw',type:'Security',c:'#050813',c2:'#5a7bd0',kind:'wolf',eye:'#4f74d6'},
+ {id:11,name:'Solarix',type:'Politics',c:'#0b2a6f',c2:'#f4f6ff',kind:'sun'}
 ];
-const WEIGHT={1:6,2:3,3:1.2,4:.25};
-const RARNAME={1:'Common',2:'Uncommon',3:'Rare',4:'Legendary'};
 
+/* ---------- stories (October 2026 edition, as of Oct. 14, 2026) ---------- */
+const EDITION={label:'October 2026',asOf:'Oct. 14, 2026'};
+const STORY_DATA={
+ Solarix:{title:'Impeachment trial narrows to one article',stat:'1 of 4',label:'articles of impeachment reported still standing against VP Sara Duterte as of Oct. 14',claim:'As of Oct. 14, the Senate impeachment court is still hearing all four original articles.',ans:false,why:'Reports say the court approved dropping three of the four, leaving the unexplained wealth article.',src:{name:'Daily Tribune: prosecutors to rest case (Oct. 9)',url:'https://tribune.net.ph/2026/10/09/house-prosecution-panel-to-rest-vp-sara-impeachment-case-on-article-ii'}},
+ Zapnub:{title:'Meralco told to refund P2.64 billion',stat:'P2.64B',label:'net refund ordered by the Energy Regulatory Commission',claim:'The Meralco refund order is final and cannot change.',ans:false,why:'The ERC called it provisional, with hearings scheduled for Oct. 16 to 23.',src:{name:'GMA News: ERC tells Meralco to refund',url:'https://www.gmanetwork.com/news/money/companies/1005587/erc-tells-meralco-to-refund-p2-64-billion-to-customers/story/'}},
+ Fluffum:{title:'Haze keeps air quality in the red',stat:'AQI 215',label:"Metro Cebu reading on Sept. 2, in the 'acutely unhealthy' range (DENR-EMB 7)",claim:'DENR-EMB said the haze was possibly linked to fires in Kalimantan, Indonesia.',ans:true,why:'That is what the bureau said in its advisory, citing transboundary haze carried by prevailing winds.',src:{name:'Philstar: toxic haze halts classes (Sept. 3)',url:'https://www.philstar.com/nation/2026/09/03/2553765/toxic-haze-halts-classes'}},
+ Dreamoo:{title:'House votes to bar kids under 13 from social media',stat:'Under 13',label:'age covered by the House-approved ban (Oct. 12)',claim:'The House and Senate versions of the bill set the same age limit.',ans:false,why:"The House version covers under 13. The Senate's is stricter and bars anyone under 18 from creating accounts.",src:{name:'Reuters via The Star: lower house approves bill',url:'https://www.thestar.com.my/aseanplus/aseanplus-news/2026/10/12/philippine-lower-house-approves-bill-restricting-minors039-social-media-access'}},
+ Frostik:{title:'Water cannon delays a medical evacuation at Ayungin Shoal',stat:'~10 hrs',label:'delay the Philippine Coast Guard reported on the Oct. 8 evacuation',claim:'The water cannon stream hit the BRP Cabra during the Oct. 8 evacuation.',ans:false,why:'The Coast Guard said the stream did not hit the ship, though the encounter delayed the mission.',src:{name:'South China Morning Post: Beijing and Manila trade blame',url:'https://scmp.com/news/china/diplomacy/article/3370306/china-and-philippines-blame-each-other-over-south-china-sea-medical-mission'}},
+ Embit:{title:'More families say they are poor',stat:'16.8M',label:"families rated themselves poor in SWS's Sept. 21 to 27 survey",claim:'Self-rated poverty fell between June and September 2026.',ans:false,why:'It rose from 49 percent in June to 55 percent in September.',src:{name:'Manila Bulletin: 16.8 million families consider themselves poor',url:'https://mb.com.ph/2026/10/13/168-million-families-consider-themselves-poor-in-q3-2026-sws'}},
+ Lunaraw:{title:'A China-remittance claim reaches the impeachment trial',stat:'P319.33M',label:'remittances from China and Hong Kong to Cale88 Foods, per AMLC testimony on Oct. 5',claim:'Reports say wrongdoing over the China-linked remittances has been established.',ans:false,why:'Coverage notes the allegations have drawn scrutiny but wrongdoing has not been established.',src:{name:'Daily Tribune: Duterte hits Marcos over China funding',url:'https://tribune.net.ph/2026/10/12/inday-hits-marcos-over-china-funding-alleges-security-threat'}},
+ Puddlo:{title:"Metro Manila's water allocation is cut for El Niño",stat:'44 m³/s',label:'MWSS allocation from October, down from the usual 50 to 53 (NWRB)',claim:"Metro Manila's water allocation was raised starting in October.",ans:false,why:'The NWRB lowered it to 44 cubic meters per second from the usual 50 to 53.',src:{name:'Daily Tribune: government braces for strong El Niño',url:'https://tribune.net.ph/2026/09/30/govt-braces-for-strong-el-ni%C3%B1o'}},
+ Leafling:{title:"Farms brace for a 'very strong' El Niño",stat:'P10B',label:'extra El Niño funding the Agriculture department is seeking',claim:'PAGASA said on Sept. 23 that a strong El Niño was already active.',ans:true,why:'It also said the event was expected to intensify into a very strong El Niño during September to December.',src:{name:'Daily Tribune: government braces for strong El Niño',url:'https://tribune.net.ph/2026/09/30/govt-braces-for-strong-el-ni%C3%B1o'}},
+ Pebblit:{title:'House passes the P7.2-trillion 2027 budget',stat:'281 to 13',label:'House vote on third reading (one abstention), reported Oct. 12',claim:'The 2027 budget bill is already signed into law.',ans:false,why:'The House passed it on third reading. It still goes through Senate deliberations before enactment.',src:{name:'Daily Tribune: House approves 2027 budget',url:'https://tribune.net.ph/2026/10/12/house-approves-p72-trillion-2027-budget-amid-minority-objections'}},
+ Boolet:{title:'Flood control scandal: cases move, questions remain',stat:'P611.4M',label:'returned to the DOJ as of March 2026 in the flood control probe',claim:'PCIJ reports that the 2026 budget enacted after the scandal drastically reduced flood control funding.',ans:true,why:"That is what PCIJ's July 2026 review says, though the House's 2027 budget bill restores P107.4 billion.",src:{name:'PhilSTAR Life: what has happened since the 2025 SONA',url:'https://philstarlife.com/amp/article/609533-what-has-happened-since-marcos-2025-sona'}},
+ Glimmoth:{title:"What a trust survey does and doesn't tell us",stat:'56% vs 36%',label:'strong trust in VP Duterte vs. President Marcos, SWS Sept. 21 to 27',claim:'The SWS trust survey interviewed 1,500 adults face to face.',ans:true,why:'The Sept. 21 to 27 survey used face-to-face interviews with 1,500 adults nationwide.',src:{name:'Daily Tribune: SWS trust and satisfaction ratings',url:'https://tribune.net.ph/2026/10/13/dutertes-56-trust-dwarfs-marcos-36-as-presidents-satisfaction-rating-sinks'}}
+};
+const STORIES=SP.map(sp=>Object.assign({sp},STORY_DATA[sp.name]));
+const storyOf=sp=>STORIES[sp.id];
+
+/* ---------- 2D art (used for icons and card faces) ---------- */
 function artRaw(s){
   const c=s.c,c2=s.c2,eye=s.eye||'#2a2438';
   let back='',mid='',front='';
@@ -634,470 +263,626 @@ function art(s){
     return `<${t}${a} stroke="#050813" stroke-width="2.6" stroke-linejoin="round"${sl}>`;
   });
 }
-const imgCache={};
 const uri=s=>'data:image/svg+xml;utf8,'+encodeURIComponent(art(s));
-function spImg(s){if(!imgCache[s.id]){const im=new Image();im.src=uri(s);imgCache[s.id]=im;}return imgCache[s.id];}
-const ORB_SVG=`<svg viewBox="0 0 68 68" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="og" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#2a4fae"/><stop offset="1" stop-color="#050f33"/></radialGradient></defs><circle cx="34" cy="34" r="31" fill="url(#og)"/><circle cx="34" cy="34" r="22" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2.5"/><path d="M35 20v17a6 6 0 0 1-12 0" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>`;
 
-/* ---------- state ---------- */
-const KEY='jourknows-go-v1';
-let S={xp:0,lvl:1,orbs:15,caught:[],cam:false,read:{}};
-try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
-const need=()=>150+S.lvl*100;
+/* ---------- three.js core ---------- */
+const canvas=$('#c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setClearColor(0x02040b,1);
+const GRAD=(()=>{const d=new Uint8Array([95,175,255]);const t=new THREE.DataTexture(d,3,1,THREE.LuminanceFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;return t;})();
+const MAT={};
+const toon=col=>MAT[col]||(MAT[col]=new THREE.MeshToonMaterial({color:col,gradientMap:GRAD}));
+const OUT=new THREE.MeshBasicMaterial({color:0x050813,side:THREE.BackSide});
+const SPH=new THREE.SphereGeometry(1,28,20),CONE=new THREE.ConeGeometry(1,2,14),CYL=new THREE.CylinderGeometry(1,1,1,16),BOX=new THREE.BoxGeometry(1,1,1),TET=new THREE.TetrahedronGeometry(1);
+function mk(geo,col,o=1.07){const m=new THREE.Mesh(geo,toon(col));if(o){const l=new THREE.Mesh(geo,OUT);l.scale.setScalar(o);m.add(l);}return m;}
+function sph(col,x,y,z,sx,sy=sx,sz=sx,o=1.08){const m=mk(SPH,col,o);m.position.set(x,y,z);m.scale.set(sx,sy,sz);return m;}
+function cone(col,x,y,z,r,h,rx=0,rz=0,o=1.1){const m=mk(CONE,col,o);m.position.set(x,y,z);m.scale.set(r,h/2,r);m.rotation.set(rx,0,rz);return m;}
+function cyl(col,x,y,z,r,h,o=0){const m=mk(CYL,col,o);m.position.set(x,y,z);m.scale.set(r,h,r);return m;}
+function skyTex(a,b){const c=document.createElement('canvas');c.width=4;c.height=256;const x=c.getContext('2d');const g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,a);g.addColorStop(1,b);x.fillStyle=g;x.fillRect(0,0,4,256);return new THREE.CanvasTexture(c);}
+function lights(sc){sc.add(new THREE.HemisphereLight(0xffffff,0x8fa4e0,.85));const d=new THREE.DirectionalLight(0xffffff,.9);d.position.set(4,10,6);sc.add(d);}
+function rrect(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
 
-/* ---------- toast ---------- */
-let toastT;
-function toast(msg,ms=2200){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms);}
-
-/* ---------- HUD ---------- */
-let gpsOn=false,gpsWatch=null,mapStarted=false;
-function hud(){
-  $('#lvl').textContent=S.lvl;
-  $('#xpTxt').textContent=`${S.xp} / ${need()} xp`;
-  $('#xpFill').style.width=clamp(S.xp/need()*100,0,100)+'%';
-  $('#orbCount').textContent=S.orbs;
-  $('#encOrbs').textContent=S.orbs;
-  $('#modeDot').classList.toggle('on',gpsOn);
-  $('#modeTxt').textContent=gpsOn?'GPS live':gpsWatch!=null?'Locating...':'Tap to walk';
-  $('#swGps').setAttribute('aria-checked',gpsOn||gpsWatch!=null);
-  $('#swCam').setAttribute('aria-checked',!!S.cam);
+/* ---------- 3D Journs (cartoon, toon-shaded, inked outlines) ---------- */
+function buildJourn(sp){
+  const g=new THREE.Group(),b=new THREE.Group();g.add(b);
+  const c=sp.c,c2=sp.c2,eye=sp.eye||'#050813',k=sp.kind;
+  /* parts behind the body */
+  if(k==='moth')for(const s of[-1,1]){const w=sph(c2,s*1.2,1.2,-.35,.95,1.05,.12);w.rotation.y=s*.5;w.rotation.z=-s*.25;b.add(w);}
+  if(k==='sun')for(let i=0;i<12;i++){const a=i*Math.PI/6;b.add(cone(i%2?'#1f48a8':'#ffffff',Math.sin(a)*1.55,1+Math.cos(a)*1.55,-.4,.22,.65,0,-a,1.12));}
+  if(k==='flame'){b.add(sph('#1f48a8',0,.7,-1.05,.32,.32,.4));b.add(cone('#0b2a6f',0,1.25,-1.05,.2,.55,0,0,1.1));}
+  if(k==='drop')b.add(sph(c,0,.55,-1.1,.38,.34,.5));
+  if(k==='wolf')b.add(sph(c2,0,.85,-1.25,.34,.34,.62));
+  if(k==='bolt')[[0,.9,-.5],[.22,1.4,.5],[-.08,1.9,-.5]].forEach(([x,y,r])=>{const z=mk(BOX,'#0b2a6f',1.12);z.position.set(x,y,-1.1);z.scale.set(.3,.65,.14);z.rotation.z=r;b.add(z);});
+  /* body */
+  b.add(sph(c,0,1,0,1,.92,.95,1.07));
+  if(k==='ghost'){const sk=new THREE.Mesh(new THREE.CylinderGeometry(.92,1.08,.6,22),toon(c));sk.position.y=.34;const sl=new THREE.Mesh(sk.geometry,OUT);sl.scale.setScalar(1.06);sk.add(sl);b.add(sk);}
+  b.add(sph(c2,0,.6,.62,.62,.46,.34,0));
+  /* face */
+  for(const s of[-1,1]){
+    b.add(sph('#ffffff',s*.38,1.2,.8,.25,.3,.18,1.1));
+    b.add(sph(eye,s*.38,1.18,.94,.13,.16,.1,0));
+    b.add(sph('#ffffff',s*.38+.04,1.24,1.02,.045,.045,.03,0));
+    b.add(sph('#9db4ee',s*.68,.93,.72,.15,.09,.06,0));
+  }
+  const mouth=new THREE.Mesh(new THREE.TorusGeometry(.13,.035,8,14,Math.PI),toon('#050813'));mouth.rotation.z=Math.PI;mouth.position.set(0,1.0,.955);b.add(mouth);
+  /* limbs */
+  for(const s of[-1,1]){
+    if(k!=='ghost')b.add(sph(c2,s*.45,.12,.35,.3,.18,.38,1.1));
+    b.add(sph(c,s*.98,.85,.12,.2,.26,.2,1.1));
+  }
+  /* head accessory */
+  switch(k){
+    case 'leaf':b.add(cyl('#050813',0,1.98,0,.05,.35));for(const s of[-1,1]){const l=sph(s<0?'#1f48a8':'#c9d4f5',s*.4,2.2,0,.5,.12,.26);l.rotation.z=s*.45;b.add(l);}break;
+    case 'flame':b.add(cone('#0b2a6f',0,2.45,0,.42,1.05));b.add(cone('#ffffff',0,2.38,.05,.22,.62,0,0,0));break;
+    case 'drop':b.add(cone(c,0,2.45,0,.34,.95));break;
+    case 'bolt':for(const s of[-1,1]){b.add(cone(c,s*.62,2.1,0,.28,.9,0,-s*.35));b.add(cone('#050813',s*.7,2.55,0,.14,.3,0,-s*.35,0));}break;
+    case 'rock':b.add(cone('#3a4a80',-.45,2.05,0,.3,.8,0,.3));b.add(cone('#aab8e6',0,2.25,0,.36,1.1));b.add(cone('#3a4a80',.45,2.05,0,.3,.8,0,-.3));b.add(sph('#2a3a70',.98,.62,.3,.14));break;
+    case 'cloud':b.add(sph(c2,-.45,2.0,0,.45));b.add(sph(c2,0,2.28,0,.55));b.add(sph(c2,.45,2.0,0,.45));break;
+    case 'moth':for(const s of[-1,1]){const a=cyl('#050813',s*.28,2.15,0,.04,.42);a.rotation.z=-s*.4;b.add(a);b.add(sph('#ffffff',s*.5,2.42,0,.11));}break;
+    case 'ghost':b.add(sph(c,0,2.0,0,.2,.26,.2));break;
+    case 'ice':b.add(cone('#eef2ff',-.42,2.1,0,.22,.9,0,.3));b.add(cone('#eef2ff',0,2.3,0,.26,1.15));b.add(cone('#eef2ff',.42,2.1,0,.22,.9,0,-.3));break;
+    case 'moon':for(const s of[-1,1]){b.add(sph(c,s*.78,1.8,0,.34));b.add(sph(c2,s*.78,1.8,.12,.2,.2,.1,0));}{const t=new THREE.Mesh(new THREE.TorusGeometry(.3,.1,8,20,Math.PI*1.5),toon('#ffffff'));const l=new THREE.Mesh(t.geometry,OUT);l.scale.setScalar(1.18);t.add(l);t.position.set(0,2.3,0);b.add(t);}break;
+    case 'wolf':for(const s of[-1,1]){b.add(cone(c,s*.6,2.1,0,.36,.95,0,-s*.3));b.add(cone(c2,s*.6,2.0,.1,.2,.55,0,-s*.3,0));}break;
+  }
+  return g;
 }
-function addXP(n){
-  S.xp+=n;
-  while(S.xp>=need()){S.xp-=need();S.lvl++;S.orbs+=10;toast(`Level ${S.lvl}! +10 orbs`,3000);}
-  save();hud();
+const PROTO={};
+function cloneJourn(id){return(PROTO[id]||(PROTO[id]=buildJourn(SP[id]))).clone(true);}
+function animJourn(g,t,ph=0,amp=.14,spd=6){
+  const b=g.children[0],s=Math.abs(Math.sin(t*spd+ph)),q=1-s;
+  b.position.y=s*amp;b.scale.set(1+.05*q,1-.06*q,1+.05*q);
 }
 
-/* ---------- world ---------- */
-const CELL=70,ROAD=9,SCALE=2.4,RANGE=36;
-const W={x:0,y:0,tx:null,ty:null,heading:-Math.PI/2};
-let spawns=[];const stopCool=new Map();
-function hash(i,j,s=0){let h=Math.imul(i,374761393)^Math.imul(j,668265263)^Math.imul(s+1,2246822519);h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return (h>>>0)/4294967296;}
-function pickSpecies(){let tot=0;SPECIES.forEach(s=>tot+=WEIGHT[s.rar]);let r=Math.random()*tot;for(const s of SPECIES){r-=WEIGHT[s.rar];if(r<=0)return s;}return SPECIES[0];}
-const rollCP=s=>Math.round(s.rar*110*rnd(.6,1.4)+S.lvl*12+rnd(8,30));
-function makeSpawn(now){const a=rnd(0,Math.PI*2),d=rnd(28,95),sp=pickSpecies();return{sp,x:W.x+Math.cos(a)*d,y:W.y+Math.sin(a)*d,die:now+rnd(120,300)*1000,cp:rollCP(sp),ph:rnd(0,6)};}
-function upkeep(now){spawns=spawns.filter(s=>now<s.die&&Math.hypot(s.x-W.x,s.y-W.y)<260);while(spawns.length<7)spawns.push(makeSpawn(now));}
-function stopsNear(){const out=[];const ci=Math.floor(W.x/CELL),cj=Math.floor(W.y/CELL);for(let i=ci-4;i<=ci+4;i++)for(let j=cj-4;j<=cj+4;j++)if(hash(i,j,7)>.9)out.push({i,j,x:(i+.5)*CELL,y:(j+.5)*CELL,key:i+','+j});return out;}
-
-/* ---------- canvas ---------- */
-const cv=$('#map'),ctx=cv.getContext('2d');
-let cw=0,ch=0,dpr=1,CX=0,CY=0;
-function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);cw=r.width;ch=r.height;cv.width=cw*dpr;cv.height=ch*dpr;CX=cw/2;CY=ch*.56;}
-new ResizeObserver(resize).observe(cv);
-const C={};
-function readColors(){const cs=getComputedStyle(document.documentElement);['--map-road','--map-block','--map-park','--map-water','--map-bldg','--ink','--accent','--accent-ink','--teal','--gold','--surface'].forEach(k=>C[k]=cs.getPropertyValue(k).trim());}
-readColors();
-const rgba=(hex,a)=>{const h=(hex||'#000').replace('#','');return h.length===6?`rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`:`rgba(0,0,0,${a})`;};
-const toScreen=(x,y)=>[CX+(x-W.x)*SCALE,CY+(y-W.y)*SCALE];
-const toWorld=(px,py)=>[W.x+(px-CX)/SCALE,W.y+(py-CY)/SCALE];
-function rr(x,y,w,h,r){ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);}
-
-function drawMap(t){
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle=C['--map-road'];ctx.fillRect(0,0,cw,ch);
-  const x0=W.x-CX/SCALE,x1=W.x+(cw-CX)/SCALE,y0=W.y-CY/SCALE,y1=W.y+(ch-CY)/SCALE;
-  for(let i=Math.floor(x0/CELL);i<=Math.floor(x1/CELL);i++){
-    for(let j=Math.floor(y0/CELL);j<=Math.floor(y1/CELL);j++){
-      const h=hash(i,j),bx=i*CELL+ROAD/2,by=j*CELL+ROAD/2,bs=CELL-ROAD;
-      const [px,py]=toScreen(bx,by),sz=bs*SCALE;
-      ctx.fillStyle=h<.14?C['--map-park']:h<.2?C['--map-water']:C['--map-block'];
-      rr(px,py,sz,sz,10);ctx.fill();
-      if(h>=.2){
-        ctx.fillStyle=C['--map-bldg'];
-        for(let k=0;k<4;k++){
-          const hh=hash(i,j,k+3);if(hh<.25)continue;
-          const ox=(k%2)*.5,oy=(k>>1)*.5,w=sz*(.28+hh*.12),hgt=sz*(.28+hash(i,j,k+9)*.12);
-          rr(px+sz*(ox+.08),py+sz*(oy+.08),w,hgt,5);ctx.fill();
-        }
-      } else if(h<.14){
-        ctx.fillStyle='rgba(255,255,255,.28)';
-        for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(px+sz*(.2+hash(i,j,k+20)*.6),py+sz*(.2+hash(i,j,k+30)*.6),sz*.05,0,7);ctx.fill();}
-      }
+/* ---------- FX + UI ---------- */
+class FX{
+  constructor(sc){this.sc=sc;this.ps=[];}
+  burst(p,n=14,cols=['#ffffff','#a9bdf0','#6f8fe6'],spd=6){
+    n=REDUCED?Math.ceil(n/2):n;
+    for(let i=0;i<n;i++){
+      const m=new THREE.Mesh(TET,toon(pick(cols)));m.scale.setScalar(rnd(.08,.18));m.position.copy(p);this.sc.add(m);
+      const a=rnd(0,6.28),u=rnd(.3,1);
+      this.ps.push({m,v:new THREE.Vector3(Math.cos(a)*spd*u,rnd(2,spd),Math.sin(a)*spd*u),l:rnd(.5,.9)});
     }
   }
-  /* stops */
-  for(const st of stopsNear()){
-    const [sx,sy]=toScreen(st.x,st.y);if(sx<-40||sx>cw+40||sy<-60||sy>ch+40)continue;
-    const cool=(stopCool.get(st.key)||0)>performance.now();
-    const pulse=cool?0:(Math.sin(t/500)+1)*4;
-    ctx.fillStyle=cool?'rgba(140,140,170,.9)':C['--teal'];
-    ctx.globalAlpha=.25;ctx.beginPath();ctx.arc(sx,sy,24+pulse,0,7);ctx.fill();ctx.globalAlpha=1;
-    ctx.beginPath();ctx.moveTo(sx,sy-20);ctx.lineTo(sx+15,sy);ctx.lineTo(sx,sy+20);ctx.lineTo(sx-15,sy);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill();
+  update(dt){
+    for(let i=this.ps.length-1;i>=0;i--){
+      const q=this.ps[i];q.l-=dt;q.v.y-=14*dt;q.m.position.addScaledVector(q.v,dt);q.m.rotation.x+=dt*8;q.m.scale.multiplyScalar(Math.max(0,1-dt*1.2));
+      if(q.l<=0){this.sc.remove(q.m);this.ps.splice(i,1);}
+    }
   }
-  /* catch range */
-  ctx.setLineDash([6,8]);ctx.strokeStyle=C['--ink'];ctx.globalAlpha=.35;ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(CX,CY,RANGE*SCALE,0,7);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-  /* walk target */
-  if(W.tx!=null){const [tx,ty]=toScreen(W.tx,W.ty);ctx.strokeStyle=C['--accent'];ctx.lineWidth=3;ctx.beginPath();ctx.arc(tx,ty,9+Math.sin(t/200)*2,0,7);ctx.stroke();}
-  /* spawns */
-  const list=[...spawns].sort((a,b)=>a.y-b.y);
-  for(const s of list){
-    const [sx,sy]=toScreen(s.x,s.y);if(sx<-50||sx>cw+50||sy<-70||sy>ch+50)continue;
-    const near=Math.hypot(s.x-W.x,s.y-W.y)<=RANGE;
-    const bob=Math.sin(t/380+s.ph)*3;
-    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(sx,sy+8,18,6,0,0,7);ctx.fill();
-    if(s.sp.rar>=3){ctx.strokeStyle=s.sp.rar===4?C['--gold']:C['--accent'];ctx.lineWidth=3;ctx.globalAlpha=.6+.3*Math.sin(t/300);ctx.beginPath();ctx.arc(sx,sy-16,34,0,7);ctx.stroke();ctx.globalAlpha=1;}
-    if(near){ctx.strokeStyle=C['--accent'];ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(sx,sy+8,24,9,0,0,7);ctx.stroke();}
-    ctx.globalAlpha=.92;ctx.fillStyle=C['--surface'];ctx.beginPath();ctx.arc(sx,sy-22+bob,31,0,7);ctx.fill();ctx.globalAlpha=.35;ctx.strokeStyle=C['--ink'];ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1;
-    const im=spImg(s.sp);if(im.complete&&im.naturalWidth)ctx.drawImage(im,sx-30,sy-52+bob,60,60);
-    if(near){ctx.fillStyle=C['--accent'];ctx.beginPath();ctx.arc(sx+22,sy-50+bob,10,0,7);ctx.fill();ctx.fillStyle=C['--accent-ink'];ctx.font='700 14px system-ui';ctx.textAlign='center';ctx.fillText('!',sx+22,sy-45+bob);}
+}
+let learnT;
+const UI={
+  show(on){$('#hud').hidden=!on;if(!on){$('#prompt').hidden=true;$('#learn').hidden=true;}},
+  score(n){$('#hScore').textContent=n;},
+  mid(t){$('#hMid').textContent=t;$('#hMid').hidden=!t;},
+  hearts(n,max=3){$('#hHearts').innerHTML=max?Array.from({length:max},(_,i)=>`<span class="${i<n?'':'lost'}">♥</span>`).join(''):'';},
+  prompt(tag,text,sub){
+    const p=$('#prompt');p.hidden=!tag&&!text;
+    $('#pTag').textContent=tag||'';$('#pText').textContent=text||'';$('#pSub').textContent=sub||'';
+    p.classList.remove('bump');void p.offsetWidth;p.classList.add('bump');
+  },
+  learn(html,ms=3400){const l=$('#learn');l.innerHTML=html;l.hidden=false;clearTimeout(learnT);learnT=setTimeout(()=>{l.hidden=true;},ms);},
+  pop(text,x,y,cls){const d=document.createElement('div');d.className='pop '+(cls||'');d.textContent=text;d.style.left=x+'px';d.style.top=y+'px';$('#pops').appendChild(d);setTimeout(()=>d.remove(),950);}
+};
+const scr=(v,cam)=>{const p=v.clone().project(cam);return[(p.x*.5+.5)*innerWidth,(-p.y*.5+.5)*innerHeight];};
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const stars=n=>`<div class="stars" aria-label="${n} of 3 stars">${[0,1,2].map(i=>`<span class="${i<n?'':'off'}">★</span>`).join('')}</div>`;
+
+/* ---------- Hub scene ---------- */
+function mkHub(){
+  const scene=new THREE.Scene();scene.background=skyTex('#02040b','#14307a');lights(scene);
+  const cam=new THREE.PerspectiveCamera(50,1,.1,100);
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(10,48),toon('#0a2260'));floor.rotation.x=-Math.PI/2;scene.add(floor);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(10,.25,8,64),toon('#6f8fe6'));rim.rotation.x=Math.PI/2;rim.position.y=.1;scene.add(rim);
+  const sp=[];for(let i=0;i<70;i++)sp.push(rnd(-30,30),rnd(4,26),rnd(-30,-6));
+  const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.28})));
+  const ring=new THREE.Group();scene.add(ring);
+  let R=5,js=[];
+  SP.forEach((s,i)=>{const j=cloneJourn(s.id);j.userData={a:i/SP.length*Math.PI*2,hop:0,id:s.id};ring.add(j);js.push(j);});
+  const rc=new THREE.Raycaster();
+  function layout(){
+    const asp=innerWidth/innerHeight;R=clamp(asp*4.2,2.5,6.2);
+    const sc=clamp(R/6.2,.5,.9);
+    js.forEach(j=>{j.scale.setScalar(sc);j.position.set(Math.sin(j.userData.a)*R,0,Math.cos(j.userData.a)*R);j.rotation.y=j.userData.a;});
+    cam.position.set(0,3.6,R+8.5);cam.lookAt(0,1.2,0);
   }
-  /* player */
-  ctx.save();ctx.translate(CX,CY);
-  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(0,10,16,6,0,0,7);ctx.fill();
-  ctx.rotate(W.heading+Math.PI/2);
-  const g=ctx.createRadialGradient(0,0,4,0,-34,48);g.addColorStop(0,rgba(C['--accent'],.5));g.addColorStop(1,rgba(C['--accent'],0));
-  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,52,-Math.PI/2-.55,-Math.PI/2+.55);ctx.closePath();ctx.fill();
-  ctx.restore();
-  ctx.fillStyle=C['--surface'];ctx.strokeStyle=C['--ink'];ctx.lineWidth=2;ctx.beginPath();ctx.arc(CX,CY,13,0,7);ctx.fill();ctx.stroke();
-  ctx.fillStyle=C['--accent'];ctx.beginPath();ctx.arc(CX,CY,9,0,7);ctx.fill();
+  return{scene,cam,
+    resize(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();layout();},
+    update(dt,t){
+      ring.rotation.y=t*.18;
+      js.forEach((j,i)=>{
+        if(j.userData.hop>0)j.userData.hop=Math.max(0,j.userData.hop-dt*2.2);
+        animJourn(j,t,i*.7,.1);
+        j.children[0].position.y+=Math.sin(j.userData.hop*Math.PI)*1.1;
+        const sel=j.userData.id===S.pick;j.children[0].rotation.y=sel?Math.sin(t*3)*.25:0;
+      });
+    },
+    pointer(type,x,y){
+      if(type!=='down')return;
+      rc.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),cam);
+      const h=rc.intersectObjects(ring.children,true)[0];if(!h)return;
+      let o=h.object;while(o.parent&&o.parent!==ring)o=o.parent;
+      if(o.userData&&o.userData.id!=null){o.userData.hop=1;SND.pop();buzz(15);}
+    },
+    dispose(){}
+  };
 }
 
-/* ---------- movement / loop ---------- */
-const gpsT={x:0,y:0};let origin=null,lastUp=0,lastCol=0,last=performance.now();
-function update(dt,now){
-  if(gpsOn){
-    const dx=gpsT.x-W.x,dy=gpsT.y-W.y,d=Math.hypot(dx,dy);
-    if(d>.3)W.heading=Math.atan2(dy,dx);
-    const k=Math.min(1,dt*3);W.x+=dx*k;W.y+=dy*k;
-  }else if(W.tx!=null){
-    const dx=W.tx-W.x,dy=W.ty-W.y,d=Math.hypot(dx,dy),step=16*dt;
-    W.heading=Math.atan2(dy,dx);
-    if(d<=step){W.x=W.tx;W.y=W.ty;W.tx=null;W.ty=null;}else{W.x+=dx/d*step;W.y+=dy/d*step;}
+/* ---------- Game 1: Fact Dash (3D runner) ---------- */
+function mkDash(){
+  const scene=new THREE.Scene();scene.background=skyTex('#5f82dc','#eef2ff');scene.fog=new THREE.Fog(0xdfe6fa,40,125);
+  const cam=new THREE.PerspectiveCamera(58,1,.1,300);lights(scene);
+  const fx=new FX(scene);
+  const LANE=2.4,NG=10,GAP=90,FIRST=70;
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(300,420),toon('#c9d4f5'));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.03,-150);scene.add(ground);
+  const road=new THREE.Mesh(new THREE.PlaneGeometry(LANE*3+.4,420),toon('#14307a'));road.rotation.x=-Math.PI/2;road.position.set(0,0,-150);scene.add(road);
+  for(const s of[-1,1]){const cb=mk(BOX,'#ffffff',0);cb.scale.set(.35,.22,420);cb.position.set(s*(LANE*1.5+.4),.1,-150);scene.add(cb);}
+  /* lane dashes */
+  const dashes=[];
+  for(const x of[-LANE/2,LANE/2])for(let i=0;i<26;i++){const d=mk(BOX,'#ffffff',0);d.scale.set(.16,.02,2.2);d.position.set(x,.02,0);d.userData.i=i;scene.add(d);dashes.push(d);}
+  /* scenery */
+  const props=[],NP=14,SPN=14;
+  function makeProp(side){
+    const g=new THREE.Group(),r=Math.random();
+    if(r<.55){
+      const h=rnd(3,9),w=rnd(2.6,4),b=mk(BOX,pick(['#6f8fe6','#a9bdf0','#1f48a8','#c9d4f5','#0a2260']),1.03);b.scale.set(w,h,w);b.position.y=h/2;g.add(b);
+      for(let i=0;i<Math.floor(h/1.7);i++){const wn=new THREE.Mesh(BOX,toon('#ffffff'));wn.scale.set(.05,.6,.7);wn.position.set(-side*(w/2+.03),1.1+i*1.5,0);g.add(wn);}
+      const roof=cone('#050813',0,h+.55,0,w*.62,1.1,0,0,1.06);roof.rotation.y=Math.PI/4;g.add(roof);
+    }else{
+      g.add(cyl('#050813',0,.9,0,.22,1.8,1.1));g.add(sph('#6f8fe6',0,2.4,0,1.15,1.1,1.15));g.add(sph('#a9bdf0',.3,3.3,.1,.8));
+    }
+    g.userData.side=side;return g;
   }
-  if(now-lastUp>1500){lastUp=now;upkeep(now);}
+  for(const side of[-1,1])for(let i=0;i<NP;i++){const g=makeProp(side);g.userData.d=i*SPN-14+(side>0?7:0);g.userData.off=LANE*1.5+4.2+rnd(0,6);scene.add(g);props.push(g);}
+  /* labels */
+  function labelTex(text,fg,bg){
+    const c=document.createElement('canvas');c.width=512;c.height=256;const x=c.getContext('2d');
+    x.fillStyle=bg;x.fillRect(0,0,512,256);x.strokeStyle=fg;x.lineWidth=14;x.strokeRect(14,14,484,228);
+    x.fillStyle=fg;x.font='700 96px Fredoka,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(text,256,136);
+    const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;
+  }
+  function mkGate(label,fact){
+    const g=new THREE.Group(),bg=fact?'#ffffff':'#050813',fg=fact?'#050813':'#ffffff',W=LANE*.95;
+    for(const s of[-1,1]){const p=mk(BOX,'#0a2260',1.08);p.scale.set(.2,3.9,.2);p.position.set(s*W/2,1.95,0);g.add(p);}
+    const bar=mk(BOX,'#0a2260',1.04);bar.scale.set(W+.2,1.45,.14);bar.position.set(0,3.2,-.06);g.add(bar);
+    const pn=new THREE.Mesh(new THREE.PlaneGeometry(W,1.2),new THREE.MeshBasicMaterial({map:labelTex(label,fg,bg)}));pn.position.set(0,3.2,.04);g.add(pn);
+    const pad=new THREE.Mesh(new THREE.PlaneGeometry(W,6),new THREE.MeshBasicMaterial({color:fact?0xeef2ff:0x050813,transparent:true,opacity:.6}));pad.rotation.x=-Math.PI/2;pad.position.set(0,.04,1);g.add(pad);
+    return g;
+  }
+  function mkBarrier(){
+    const g=new THREE.Group(),b=mk(BOX,'#050813',1.04);b.scale.set(LANE*.9,1.1,.6);b.position.y=.55;g.add(b);
+    const pn=new THREE.Mesh(new THREE.PlaneGeometry(LANE*.8,.8),new THREE.MeshBasicMaterial({map:labelTex('NO!','#ffffff','#050813')}));pn.position.set(0,.6,.31);g.add(pn);
+    return g;
+  }
+  /* run setup: 4 facts + 6 fictions, shuffled */
+  const facts=STORIES.filter(s=>s.ans),fics=STORIES.filter(s=>!s.ans);
+  const claims=shuffle([...shuffle(facts).slice(0,3),...shuffle(fics).slice(0,NG-3)]);
+  const gates=[],coins=[];
+  claims.forEach((cl,i)=>{
+    const factLane=Math.random()<.5?-1:1,d=FIRST+i*GAP;
+    const gf=mkGate('FACT',true),gx=mkGate('FICTION',false),gb=mkBarrier();
+    gf.position.x=factLane*LANE;gx.position.x=-factLane*LANE;
+    scene.add(gf,gx,gb);
+    gates.push({d,claim:cl,factLane,groups:[gf,gx,gb],done:false});
+    const lane=pick([-1,0,1]);
+    for(let j=0;j<6;j++){
+      const w=new THREE.Group(),disc=mk(CYL,'#ffffff',1.18);disc.scale.set(.34,.07,.34);disc.rotation.x=Math.PI/2;w.add(disc);w.position.y=1.15;
+      scene.add(w);coins.push({w,d:d+20+j*4.5,lane,got:false});
+    }
+  });
+  const END=FIRST+(NG-1)*GAP+30;
+  /* player */
+  const player=cloneJourn(S.pick);player.scale.setScalar(.85);player.rotation.y=Math.PI;scene.add(player);
+  const shadow=new THREE.Mesh(new THREE.CircleGeometry(.8,20),new THREE.MeshBasicMaterial({color:0x050813,transparent:true,opacity:.3}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.03;scene.add(shadow);
+  const ST={dist:0,lane:0,px:0,hearts:3,score:0,streak:0,correct:0,resolved:0,shake:0,over:false,hop:0};
+  let running=false,sx=0,celebrate=0;
+  const lane2x=l=>l*LANE;
+  function setPrompt(){
+    const g=gates.find(x=>!x.done);
+    if(g)UI.prompt(`Claim ${gates.indexOf(g)+1} of ${NG} · Fact or fiction?`,g.claim.claim,'Run through the FACT or FICTION gate. Skip the middle.');
+  }
+  function move(d){if(!running||ST.over)return;const n=clamp(ST.lane+d,-1,1);if(n!==ST.lane){ST.lane=n;sfx(500,'sine',.06,.06,700);}}
+  function resolve(g){
+    g.done=true;ST.resolved++;
+    const L=clamp(Math.round(ST.px/LANE),-1,1);
+    const pickedFact=L===g.factLane?true:L===-g.factLane?false:null;
+    const ok=pickedFact!==null&&pickedFact===g.claim.ans;
+    const [sx2,sy2]=scr(new THREE.Vector3(ST.px,2.6,0),cam);
+    if(ok){
+      ST.streak++;ST.correct++;const pts=100+Math.min(ST.streak,5)*10;ST.score+=pts;
+      fx.burst(new THREE.Vector3(ST.px,1.6,0),22);SND.ok();buzz(25);ST.hop=1;
+      UI.pop('+'+pts,sx2,sy2);
+    }else{
+      ST.hearts--;ST.streak=0;ST.shake=REDUCED?0:.55;SND.bad();buzz([60,40,60]);
+      UI.hearts(ST.hearts);UI.pop(pickedFact===null?'Oops!':'Not quite',sx2,sy2,'bad');
+    }
+    UI.score(ST.score);
+    UI.learn(`<b>${ok?'Correct':'Not quite'}: this one is ${g.claim.ans?'a fact':'fiction'}.</b>${esc(g.claim.why)}`,3600);
+    if(ST.hearts<=0)end();
+    else if(ST.resolved>=NG)setTimeout(end,1500);
+    else setPrompt();
+  }
+  function end(){
+    if(ST.over)return;ST.over=true;running=false;celebrate=1;
+    const st=ST.correct>=9?3:ST.correct>=6?2:ST.correct>=3?1:0;
+    setTimeout(()=>finish('dash',{title:ST.hearts<=0?'Out of hearts!':'Finish line!',score:ST.score,stars:st,line:`${ST.correct} of ${NG} claims right`,stories:claims.slice(0,Math.max(1,ST.resolved))}),900);
+  }
+  return{scene,cam,
+    resize(){
+      const asp=innerWidth/innerHeight;cam.aspect=asp;
+      cam.fov=asp<1?clamp(2*Math.atan(Math.tan(20.6*Math.PI/180)/asp)*180/Math.PI,58,82):58;
+      cam.updateProjectionMatrix();
+    },
+    start(){running=true;setPrompt();UI.hearts(3);UI.mid('');},
+    update(dt,t){
+      if(running&&!ST.over)ST.dist+=(13+.6*ST.resolved)*dt;
+      const dist=ST.dist;
+      ST.px+=(lane2x(ST.lane)-ST.px)*Math.min(1,dt*12);
+      /* world */
+      for(const d of dashes){d.position.z=6-d.userData.i*9+(dist%9);}
+      for(const p of props){let z=-(p.userData.d-dist);if(z>14){p.userData.d+=NP*SPN;z=-(p.userData.d-dist);}p.position.set(p.userData.side*p.userData.off,0,z);}
+      for(const g of gates){
+        const z=-(g.d-dist);g.groups.forEach(o=>o.position.z=z);g.groups[2].position.x=0;
+        if(running&&!g.done&&dist>=g.d-.4)resolve(g);
+      }
+      for(const c of coins){
+        const z=-(c.d-dist);c.w.position.set(lane2x(c.lane),1.15+Math.sin(t*4+c.d)*.12,z);c.w.rotation.y=t*4;c.w.visible=!c.got&&z<14;
+        if(running&&!c.got&&Math.abs(z)<.8&&Math.abs(ST.px-lane2x(c.lane))<1){c.got=true;ST.score+=10;UI.score(ST.score);SND.coin();fx.burst(c.w.position.clone(),5,['#ffffff','#a9bdf0'],3);}
+      }
+      /* player */
+      ST.hop=Math.max(0,ST.hop-dt*2);
+      animJourn(player,t,0,running?.3:.1,running?11:5);
+      player.children[0].position.y+=Math.sin(ST.hop*Math.PI)*1.0;
+      player.position.set(ST.px,0,0);
+      player.rotation.z=(lane2x(ST.lane)-ST.px)*-.12;
+      player.rotation.y=Math.PI+(celebrate?Math.sin(t*6)*.8:0);
+      shadow.position.x=ST.px;
+      /* camera */
+      ST.shake=Math.max(0,ST.shake-dt*1.6);
+      const sh=ST.shake*.35;
+      cam.position.set(ST.px*.5+rnd(-sh,sh),4.5+rnd(-sh,sh),innerWidth<innerHeight?10:8.4);
+      cam.lookAt(ST.px*.3,1.5,-12);
+      fx.update(dt);
+    },
+    pointer(type,x){
+      if(type==='down'){sx=x;}
+      else if(type==='up'){const dx=x-sx;if(Math.abs(dx)>28)move(dx>0?1:-1);else move(x>innerWidth/2?1:-1);}
+    },
+    key(e){
+      if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')move(-1);
+      else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')move(1);
+    },
+    dispose(){}
+  };
 }
-function frame(t){
-  const dt=Math.min(.05,(t-last)/1000);last=t;
-  if(t-lastCol>1500){lastCol=t;readColors();}
-  update(dt,t);
-  if(!enc&&!document.hidden&&cw)drawMap(t);
+
+/* ---------- Game 2: Journ Match (3D memory cards) ---------- */
+function mkMatch(){
+  const scene=new THREE.Scene();scene.background=skyTex('#a9bdf0','#eef2ff');lights(scene);
+  const cam=new THREE.PerspectiveCamera(45,1,.1,100);
+  const fx=new FX(scene);
+  const table=mk(BOX,'#dfe6fa',0);table.scale.set(60,.6,44);table.position.y=-.45;scene.add(table);
+  const felt=new THREE.Mesh(new THREE.CircleGeometry(11,48),toon('#c9d4f5'));felt.rotation.x=-Math.PI/2;felt.position.y=-.14;scene.add(felt);
+  const pairs=shuffle(SP).slice(0,6);
+  const specs=shuffle(pairs.flatMap(sp=>[{sp,kind:'j'},{sp,kind:'t'}]));
+  const cards=[];
+  function wrap(x,text,cx,cy,maxW,lh){
+    const words=text.split(' ');let line='',ys=[];
+    for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){ys.push(line);line=w;}else line=t;}
+    ys.push(line);const y0=cy-(ys.length-1)*lh/2;ys.forEach((l,i)=>x.fillText(l,cx,y0+i*lh));
+  }
+  function faceTex(spec){
+    const c=document.createElement('canvas');c.width=320;c.height=440;const x=c.getContext('2d');const tex=new THREE.CanvasTexture(c);tex.anisotropy=4;
+    let img=null;
+    const draw=()=>{
+      x.clearRect(0,0,320,440);
+      if(spec.kind==='j'){
+        x.fillStyle='#ffffff';rrect(x,0,0,320,440,34);x.fill();
+        x.lineWidth=12;x.strokeStyle='#050813';rrect(x,6,6,308,428,30);x.stroke();
+        x.fillStyle='#eef1fa';x.beginPath();x.arc(160,185,118,0,7);x.fill();x.lineWidth=6;x.stroke();
+        if(img&&img.complete)x.drawImage(img,50,75,220,220);
+        x.fillStyle='#050813';x.font='700 44px Fredoka,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(spec.sp.name,160,375);
+      }else{
+        x.fillStyle='#0a2260';rrect(x,0,0,320,440,34);x.fill();
+        x.lineWidth=12;x.strokeStyle='#050813';rrect(x,6,6,308,428,30);x.stroke();
+        x.strokeStyle='#6f8fe6';x.lineWidth=4;x.setLineDash([12,10]);rrect(x,26,26,268,388,22);x.stroke();x.setLineDash([]);
+        x.fillStyle='#a9bdf0';x.font='700 28px Fredoka,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('TOPIC',160,80);
+        x.fillStyle='#ffffff';x.font='700 56px Fredoka,system-ui,sans-serif';wrap(x,spec.sp.type,160,225,250,64);
+      }
+      tex.needsUpdate=true;
+    };
+    if(spec.kind==='j'){img=new Image();img.onload=draw;img.src=uri(spec.sp);}
+    draw();spec.redraw=draw;return tex;
+  }
+  const backTex=(()=>{
+    const c=document.createElement('canvas');c.width=320;c.height=440;const x=c.getContext('2d');
+    x.fillStyle='#1f48a8';rrect(x,0,0,320,440,34);x.fill();x.lineWidth=12;x.strokeStyle='#050813';rrect(x,6,6,308,428,30);x.stroke();
+    x.strokeStyle='#a9bdf0';x.lineWidth=4;x.setLineDash([12,10]);rrect(x,26,26,268,388,22);x.stroke();x.setLineDash([]);
+    x.fillStyle='#ffffff';x.font='700 190px Fredoka,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('?',160,215);
+    x.font='700 30px Fredoka,system-ui,sans-serif';x.fillStyle='#c9d4f5';x.fillText('JourKnows',160,380);
+    return new THREE.CanvasTexture(c);
+  })();
+  specs.forEach((spec,i)=>{
+    const g=new THREE.Group();
+    const body=mk(BOX,'#ffffff',1.03);body.scale.set(1.8,.14,2.4);g.add(body);body.userData.i=i;
+    const front=new THREE.Mesh(new THREE.PlaneGeometry(1.6,2.2),new THREE.MeshBasicMaterial({map:faceTex(spec)}));front.rotation.x=-Math.PI/2;front.position.y=.075;g.add(front);
+    const back=new THREE.Mesh(new THREE.PlaneGeometry(1.6,2.2),new THREE.MeshBasicMaterial({map:backTex}));back.rotation.x=Math.PI/2;back.position.y=-.075;g.add(back);
+    g.rotation.z=Math.PI;scene.add(g);
+    cards.push({g,body,spec,f:0,tf:0,matched:false,hover:0,i,pos:new THREE.Vector3()});
+  });
+  if(document.fonts&&document.fonts.load)document.fonts.load('700 40px Fredoka').then(()=>specs.forEach(s=>s.redraw())).catch(()=>{});
+  let cols=4,rows=3,running=false,over=false,lock=false,moves=0,time=0,matched=0,flipped=[],hov=-1;
+  const pops=[],found=[];
+  const rc=new THREE.Raycaster();
+  function layout(){
+    const asp=innerWidth/innerHeight;cam.aspect=asp;cam.updateProjectionMatrix();
+    cols=asp<1?3:4;rows=12/cols;
+    const sx=2.15,sz=2.75;
+    cards.forEach((c,i)=>{const cx=i%cols,cz=Math.floor(i/cols);c.pos.set((cx-(cols-1)/2)*sx,0,(cz-(rows-1)/2)*sz+.6);c.g.position.x=c.pos.x;c.g.position.z=c.pos.z;});
+    const gw=cols*sx+.6,gh=rows*sz+.8,t=Math.tan(22.5*Math.PI/180);
+    const dist=Math.max(gh/2/t*1.18,gw/2/(t*asp)*1.08)+2;
+    cam.position.set(0,dist*.9,dist*.5+.6);cam.lookAt(0,0,.5);
+  }
+  function hud(){UI.mid(`${moves} moves · ${fmt(time)}`);}
+  function flipUp(c){c.tf=1;SND.flip();}
+  function check(){
+    const [a,b]=flipped;moves++;hud();lock=true;
+    if(a.spec.sp===b.spec.sp){
+      setTimeout(()=>{
+        a.matched=b.matched=true;matched++;flipped=[];lock=false;
+        const jc=a.spec.kind==='j'?a:b;
+        const m=cloneJourn(a.spec.sp.id);m.scale.setScalar(.01);m.position.set(jc.pos.x,.2,jc.pos.z);scene.add(m);pops.push({m,t:0,x:jc.pos.x,z:jc.pos.z});
+        fx.burst(new THREE.Vector3(jc.pos.x,.8,jc.pos.z),20);SND.ok();buzz(25);
+        const st=storyOf(a.spec.sp);found.push(st);
+        UI.learn(`<b>${esc(a.spec.sp.name)} · ${esc(a.spec.sp.type)}</b>${esc(st.title)} (${esc(st.stat)})`,3600);
+        UI.score(Math.max(0,matched*100));
+        if(matched>=6)end();
+      },380);
+    }else{
+      SND.bad();
+      setTimeout(()=>{a.tf=0;b.tf=0;SND.flip();flipped=[];lock=false;},950);
+    }
+  }
+  function end(){
+    over=true;running=false;
+    const score=Math.max(100,1500-moves*40-Math.floor(time)*4),st=moves<=9?3:moves<=14?2:1;
+    setTimeout(()=>finish('match',{title:'All matched!',score,stars:st,line:`${moves} moves in ${fmt(time)}`,stories:found}),1100);
+  }
+  return{scene,cam,
+    resize(){layout();},
+    start(){running=true;UI.score(0);UI.hearts(0,0);hud();UI.prompt('Memory match','Match each Journ with its topic.','Flip two cards at a time. Every match unlocks its story.');setTimeout(()=>{if(running)$('#prompt').hidden=true;},3500);},
+    update(dt,t){
+      if(running&&!over){time+=dt;if(Math.floor(time)!==Math.floor(time-dt))hud();}
+      cards.forEach(c=>{
+        c.f+=(c.tf-c.f)*Math.min(1,dt*11);
+        const hv=(hov===c.i&&!c.matched&&!c.tf)?1:0;c.hover+=(hv-c.hover)*Math.min(1,dt*14);
+        c.g.rotation.z=Math.PI*(1-c.f);
+        c.g.position.y=Math.sin(Math.min(1,c.f)*Math.PI)*1.1+c.hover*.25;
+        const s=1+c.hover*.05+(c.matched?Math.sin(t*3+c.i)*.01:0);c.g.scale.set(s,1,s);
+      });
+      for(const p of pops){
+        p.t+=dt;const k=Math.min(1,p.t*2.5);
+        p.m.scale.setScalar(.55*ease(k));
+        p.m.position.set(p.x,.3,p.z);
+        animJourn(p.m,t,p.x,.35,7);p.m.rotation.y=Math.sin(t*2+p.x)*.5;
+      }
+      fx.update(dt);
+    },
+    pointer(type,x,y){
+      if(type!=='down'&&type!=='move')return;
+      rc.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),cam);
+      const h=rc.intersectObjects(cards.map(c=>c.body),false)[0];
+      const i=h?h.object.userData.i:-1;
+      if(type==='move'){hov=i;canvas.style.cursor=i>=0&&!cards[i].matched?'pointer':'default';return;}
+      if(!running||over||lock||i<0)return;
+      const c=cards[i];if(c.matched||c.tf||flipped.length>=2)return;
+      flipUp(c);flipped.push(c);buzz(10);
+      if(flipped.length===2)check();
+    },
+    dispose(){canvas.style.cursor='default';}
+  };
+}
+
+/* ---------- Game 3: Whack-a-Journ (3D whack-a-mole with topic tags) ---------- */
+function mkWhack(){
+  const scene=new THREE.Scene();scene.background=skyTex('#0a2260','#6f8fe6');scene.fog=new THREE.Fog(0x6f8fe6,30,60);lights(scene);
+  const cam=new THREE.PerspectiveCamera(48,1,.1,100);
+  const fx=new FX(scene);
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(22,48),toon('#14307a'));floor.rotation.x=-Math.PI/2;scene.add(floor);
+  /* hills + stars for atmosphere */
+  [[-14,-16,6,'#0a2260'],[0,-20,9,'#1f48a8'],[15,-17,7,'#0a2260']].forEach(([x,z,s,c])=>{const h=sph(c,x,0,z,s*1.6,s,s,1.03);scene.add(h);});
+  const sp0=[];for(let i=0;i<50;i++)sp0.push(rnd(-26,26),rnd(8,22),rnd(-30,-12));
+  const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp0,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.3})));
+  const holes=[];
+  const hitMat=new THREE.MeshBasicMaterial({visible:false});
+  function tagCanvas(){const c=document.createElement('canvas');c.width=300;c.height=110;return c;}
+  function drawTag(h,text){
+    const x=h.tagCtx;x.clearRect(0,0,300,110);
+    x.fillStyle='#ffffff';rrect(x,6,6,288,98,38);x.fill();x.lineWidth=8;x.strokeStyle='#050813';x.stroke();
+    x.fillStyle='#050813';x.font='700 44px Fredoka,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+    let fs=44;while(x.measureText(text).width>250&&fs>22){fs-=3;x.font=`700 ${fs}px Fredoka,system-ui,sans-serif`;}
+    x.fillText(text,150,58);h.tagTex.needsUpdate=true;
+  }
+  for(let i=0;i<9;i++){
+    const x=((i%3)-1)*3.4,z=(Math.floor(i/3)-1)*3.1+.5,g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+    const mound=mk(CYL,'#1f48a8',1.04);mound.scale.set(1.75,.3,1.75);mound.position.y=.15;g.add(mound);
+    const disc=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,.04,24),toon('#050813'));disc.position.y=.31;g.add(disc);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(1.15,.17,10,24),toon('#6f8fe6'));rim.rotation.x=Math.PI/2;rim.position.y=.33;const rl=new THREE.Mesh(rim.geometry,OUT);rl.scale.setScalar(1.12);rim.add(rl);g.add(rim);
+    const hit=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,3.4,12),hitMat);hit.position.y=1.7;hit.userData.i=i;g.add(hit);
+    const tc=tagCanvas(),tt=new THREE.CanvasTexture(tc);
+    const tag=new THREE.Sprite(new THREE.SpriteMaterial({map:tt,depthTest:false,transparent:true}));tag.scale.set(2.7,.99,1);tag.renderOrder=10;tag.visible=false;g.add(tag);
+    holes.push({i,x,z,g,hit,model:null,sp:null,ph:'idle',t:0,dur:0,target:false,tag,tagCtx:tc.getContext('2d'),tagTex:tt});
+  }
+  /* mallet */
+  const mal=new THREE.Group();mal.add(cyl('#ffffff',0,1.15,0,.17,2.3,1.15));
+  const head=mk(CYL,'#0a2260',1.1);head.rotation.z=Math.PI/2;head.scale.set(.62,1.1,.62);mal.add(head);
+  mal.visible=false;scene.add(mal);
+  const M={t:-1,x:0,z:0};
+  const rc=new THREE.Raycaster();
+  let running=false,over=false,score=0,streak=0,hearts=3,left=60,elapsed=0,spawnT=.6,q=null;
+  const deck=[],answered=[];
+  function nextQ(){
+    if(!deck.length)deck.push(...shuffle(STORIES));
+    q=deck.pop();
+    UI.prompt('Which topic fits this story?',q.title,q.stat+' · '+q.label);
+    holes.forEach(h=>{if(h.sp)h.target=h.sp.type===q.sp.type;});
+  }
+  function spawn(){
+    const free=holes.filter(h=>h.ph==='idle');if(!free.length)return;
+    const h=pick(free),needT=!holes.some(x=>x.ph==='up'&&x.target);
+    const sp=(needT||Math.random()<.34)?q.sp:pick(SP.filter(s=>s!==q.sp));
+    if(h.model)h.g.remove(h.model);
+    h.sp=sp;h.model=cloneJourn(sp.id);h.model.scale.setScalar(.78);h.model.position.set(0,-2.5,0);h.g.add(h.model);
+    h.target=sp===q.sp;h.ph='up';h.t=0;h.dur=Math.max(1.0,2.1-elapsed*.012);
+    drawTag(h,sp.type);h.tag.visible=false;SND.pop();
+  }
+  function clear(h){if(h.model){h.g.remove(h.model);h.model=null;}h.tag.visible=false;h.ph='idle';h.sp=null;h.target=false;}
+  function whack(h){
+    if(!running||over||h.ph!=='up'||h.t<.12)return;
+    M.t=0;M.x=h.x;M.z=h.z+.2;mal.visible=true;SND.hit();
+    const wp=new THREE.Vector3(h.x,2.2,h.z);
+    const [px,py]=scr(wp,cam);
+    h.ph='hit';h.t=0;
+    if(h.target){
+      streak++;const pts=100+Math.min(streak,8)*15;score+=pts;UI.score(score);
+      fx.burst(wp,20);SND.ok();buzz(30);UI.pop('+'+pts,px,py);
+      const st=q;if(!answered.includes(st))answered.push(st);
+      UI.learn(`<b>${esc(q.sp.type)}: ${esc(q.stat)}</b>${esc(q.label)}`,3000);
+      nextQ();
+    }else{
+      streak=0;hearts--;UI.hearts(hearts);fx.burst(wp,10,['#050813','#6f8fe6']);SND.bad();buzz([60,40,60]);UI.pop('Wrong topic',px,py,'bad');
+      if(hearts<=0)end();
+    }
+  }
+  function end(){
+    if(over)return;over=true;running=false;
+    const st=score>=1200?3:score>=600?2:score>=200?1:0;
+    setTimeout(()=>finish('whack',{title:hearts<=0?'Out of hearts!':"Time's up!",score,stars:st,line:`${answered.length} stories matched`,stories:answered.length?answered:[q]}),700);
+  }
+  return{scene,cam,
+    resize(){
+      const asp=innerWidth/innerHeight;cam.aspect=asp;cam.updateProjectionMatrix();
+      const d=asp<.8?19:asp<1.2?15:12.5;cam.position.set(0,d*.86,d*.62);cam.lookAt(0,.4,.8);
+    },
+    start(){running=true;nextQ();UI.hearts(3);UI.mid(fmt(left));},
+    update(dt,t){
+      if(running&&!over){
+        elapsed+=dt;left-=dt;if(Math.floor(left)!==Math.floor(left+dt))UI.mid(fmt(Math.max(0,left)));
+        if(left<=0)end();
+        spawnT-=dt;
+        const up=holes.filter(h=>h.ph==='up').length,cap=elapsed<20?2:elapsed<40?3:4;
+        if(spawnT<=0&&up<cap){spawn();spawnT=Math.max(.5,1.0-elapsed*.006);}
+      }
+      for(const h of holes){
+        if(h.ph==='idle')continue;h.t+=dt;
+        const m=h.model;if(!m){h.ph='idle';continue;}
+        if(h.ph==='up'){
+          let k;if(h.t<.22)k=h.t/.22;else if(h.t<h.dur-.25)k=1;else if(h.t<h.dur)k=(h.dur-h.t)/.25;else{if(h.target&&running)streak=0;clear(h);continue;}
+          k=ease(k);m.position.y=.3-2.8*(1-k);animJourn(m,t,h.i,.06,9);
+          h.tag.position.set(0,.3+3.15*k+(k>=1?Math.sin(t*5+h.i)*.06:0),.4);h.tag.visible=k>.55;
+        }else if(h.ph==='hit'){
+          if(h.t<.35){m.scale.set(.78*1.25,.78*.45,.78*1.25);m.position.y=.3-.9*(h.t/.35);h.tag.visible=false;}
+          else clear(h);
+        }
+      }
+      if(M.t>=0){
+        M.t+=dt;const k=Math.min(1,M.t/.1);
+        mal.position.set(M.x,4.8-2.7*ease(k),M.z);mal.rotation.x=.9*(1-k);
+        if(M.t>.42){mal.visible=false;M.t=-1;}
+      }
+      fx.update(dt);
+    },
+    pointer(type,x,y){
+      if(type!=='down')return;
+      rc.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),cam);
+      const hit=rc.intersectObjects(holes.map(h=>h.hit),false)[0];
+      if(!hit)return;
+      /* prefer the visible Journ nearest the camera when ray crosses two hit volumes */
+      whack(holes[hit.object.userData.i]);
+    },
+    dispose(){}
+  };
+}
+
+/* ---------- controller ---------- */
+const GAMES={
+  dash:{title:'Fact Dash',icon:3,desc:'Run a 3D track and pick the right gate: fact or fiction?',make:mkDash,
+    how:['Read the claim at the top of the screen.','Steer with ← → / A D, swipe, or tap the left and right sides.','Run through the <b>FACT</b> gate if it is true, the <b>FICTION</b> gate if not. Never the middle.','3 hearts. Grab the coins for bonus points.']},
+  match:{title:'Journ Match',icon:7,desc:'Flip 3D cards and pair every Journ with its topic.',make:mkMatch,
+    how:['Tap a card to flip it, then flip a second one.','Match each Journ with its topic card.','Every match pops the Journ out and unlocks its story.','Fewer moves means more stars.']},
+  whack:{title:'Whack-a-Journ',icon:10,desc:'Smash the Journ wearing the topic that fits the headline.',make:mkWhack,
+    how:['A headline appears at the top.','Journs pop out of the holes wearing topic tags. Tap the one whose topic fits the story.','A wrong whack costs a heart. Chain right ones for combo points.','You have 60 seconds.']}
+};
+let cur=null,curKey=null,hubScene=null;
+function setScene(o){if(cur&&cur.dispose)cur.dispose();cur=o;o.resize();}
+function modal(html){$('#mCard').innerHTML=html;$('#modal').hidden=false;const b=$('#mCard button');if(b)b.focus({preventScroll:true});}
+function closeModal(){$('#modal').hidden=true;}
+function renderHub(){
+  $('#games').innerHTML=Object.entries(GAMES).map(([k,g])=>`<button class="gcard" data-g="${k}"><img alt="" src="${uri(SP[g.icon])}"><div><h3 class="display">${g.title}</h3><p>${g.desc}</p><small>Best: ${S.best[k]||0}</small></div></button>`).join('');
+  $('#games').querySelectorAll('.gcard').forEach(b=>b.addEventListener('click',()=>openGame(b.dataset.g)));
+  $('#pickRow').innerHTML=SP.map(s=>`<button data-id="${s.id}" aria-pressed="${s.id===S.pick}" aria-label="${s.name}"><img alt="" src="${uri(s)}"></button>`).join('');
+  $('#pickRow').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{S.pick=+b.dataset.id;saveS();SND.pop();renderHub();}));
+  $('#foot').textContent=`Stories are short summaries compiled from published reports as of ${EDITION.asOf} (${EDITION.label} edition). Details change quickly, so follow the linked sources.`;
+}
+function showHub(){
+  closeModal();UI.show(false);curKey=null;
+  hubScene=hubScene||mkHub();setScene(hubScene);
+  $('#hub').hidden=false;renderHub();
+}
+function openGame(key){
+  closeModal();$('#hub').hidden=true;curKey=key;
+  const g=GAMES[key],sc=g.make();setScene(sc);
+  UI.show(true);UI.score(0);UI.mid('');UI.hearts(0,0);
+  modal(`<h2 class="display">${g.title}</h2><p>${g.desc}</p><div class="how"><ul>${g.how.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="btns"><button class="cbtn navy" id="mPlay">Play</button><button class="cbtn" id="mBack">Back to arcade</button></div>`);
+  $('#mPlay').addEventListener('click',()=>{closeModal();sc.start();});
+  $('#mBack').addEventListener('click',showHub);
+}
+function finish(key,r){
+  SND.win();
+  const prev=S.best[key]||0,nb=r.score>prev;if(nb){S.best[key]=r.score;saveS();}
+  $('#prompt').hidden=true;$('#learn').hidden=true;
+  const seen=[...new Set(r.stories)];
+  modal(`<h2 class="display">${esc(r.title)}</h2>${stars(r.stars)}<p class="big display">${r.score}</p><p>${esc(r.line)} · ${nb?'New best!':'Best '+prev}</p>
+  <div class="slist"><h4>Stories from this round</h4>${seen.map(s=>`<a class="stItem" href="${esc(s.src.url)}" target="_blank" rel="noopener noreferrer"><img alt="" src="${uri(s.sp)}"><span><b>${esc(s.title)}</b><small>${esc(s.stat)} · ${esc(s.src.name)}</small></span><i>↗</i></a>`).join('')}</div>
+  <p class="disc">Compiled from published reports as of ${EDITION.asOf}. Follow the links for full and current reporting.</p>
+  <div class="btns"><button class="cbtn navy" id="mAgain">Play again</button><button class="cbtn" id="mHub">Back to arcade</button></div>`);
+  $('#mAgain').addEventListener('click',()=>openGame(key));
+  $('#mHub').addEventListener('click',showHub);
+}
+
+/* input */
+canvas.addEventListener('pointerdown',e=>{if(cur&&cur.pointer)cur.pointer('down',e.clientX,e.clientY,e);});
+canvas.addEventListener('pointermove',e=>{if(cur&&cur.pointer&&e.pointerType==='mouse')cur.pointer('move',e.clientX,e.clientY,e);});
+canvas.addEventListener('pointerup',e=>{if(cur&&cur.pointer)cur.pointer('up',e.clientX,e.clientY,e);});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&curKey&&$('#modal').hidden){showHub();return;}
+  if(!$('#modal').hidden)return;
+  if(cur&&cur.key){if(/^Arrow/.test(e.key))e.preventDefault();cur.key(e);}
+});
+$('#hBack').addEventListener('click',showHub);
+function muteUI(){$('#hMute').textContent=S.mute?'✕':'♪';$('#hMute').setAttribute('aria-pressed',S.mute);}
+$('#hMute').addEventListener('click',()=>{S.mute=!S.mute;saveS();muteUI();});
+muteUI();
+
+/* loop */
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  renderer.setPixelRatio(dpr);renderer.setSize(innerWidth,innerHeight,false);
+  if(cur)cur.resize();
+}
+window.addEventListener('resize',resize);
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(cur&&!document.hidden){cur.update(dt,now/1000);renderer.render(cur.scene,cur.cam);}
   requestAnimationFrame(frame);
 }
-
-/* ---------- map input ---------- */
-let pd=null;
-cv.addEventListener('pointerdown',e=>{pd={x:e.clientX,y:e.clientY};});
-cv.addEventListener('pointerup',e=>{if(pd&&Math.hypot(e.clientX-pd.x,e.clientY-pd.y)<10)tapMap(e);pd=null;});
-function walkNear(x,y,stop){const dx=x-W.x,dy=y-W.y,d=Math.hypot(dx,dy)||1;W.tx=x-dx/d*stop;W.ty=y-dy/d*stop;}
-function tapMap(e){
-  const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
-  let best=null,bd=42;
-  for(const s of spawns){const [sx,sy]=toScreen(s.x,s.y);const d=Math.hypot(px-sx,py-(sy-20));if(d<bd){bd=d;best=s;}}
-  if(best){
-    const d=Math.hypot(best.x-W.x,best.y-W.y);
-    if(d<=RANGE)startEncounter(best);
-    else{toast(`${best.sp.name} is ${Math.round(d-RANGE)} m too far. ${gpsOn?'Walk closer.':'Walking closer...'}`);if(!gpsOn)walkNear(best.x,best.y,RANGE*.55);}
-    return;
-  }
-  for(const st of stopsNear()){
-    const [sx,sy]=toScreen(st.x,st.y);
-    if(Math.hypot(px-sx,py-sy)<32){
-      const d=Math.hypot(st.x-W.x,st.y-W.y);
-      if(d>RANGE){toast(gpsOn?'Journ Stop is out of reach. Walk closer.':'Walking to the Journ Stop...');if(!gpsOn)walkNear(st.x,st.y,RANGE*.55);return;}
-      const now=performance.now();
-      if((stopCool.get(st.key)||0)>now){toast('This stop is recharging. Try again soon.');return;}
-      stopCool.set(st.key,now+60000);S.orbs+=3;addXP(30);toast('Journ Stop: +3 orbs, +30 xp');return;
-    }
-  }
-  if(!gpsOn){const [wx,wy]=toWorld(px,py);W.tx=wx;W.ty=wy;}
-}
-
-/* ---------- GPS ---------- */
-function onFix(p){
-  const {latitude:la,longitude:lo}=p.coords;
-  if(!origin)origin={la,lo};
-  gpsT.x=(lo-origin.lo)*111320*Math.cos(origin.la*Math.PI/180);
-  gpsT.y=-(la-origin.la)*110540;
-  if(!gpsOn){gpsOn=true;W.tx=null;W.ty=null;hud();toast('GPS locked. Walk around to find Journs.');}
-}
-function onGpsErr(e){
-  if(e&&e.code===1){
-    stopGPS();
-    toast('Location is blocked for this page. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites > While Using the App, then reload.',6000);
-  }else{
-    toast('Still looking for a GPS signal. Try near a window or outdoors.',3500);
-  }
-}
-function startGPS(){
-  if(!navigator.geolocation){toast('GPS is not available in this browser. Tap the map to walk.',3200);return;}
-  if(!window.isSecureContext){toast('iPhone only allows GPS on secure (https) pages. Open the hosted link in Safari, not a saved or shared file.',6000);return;}
-  if(gpsWatch!=null)return;
-  gpsWatch=navigator.geolocation.watchPosition(onFix,onGpsErr,{enableHighAccuracy:true,maximumAge:5000,timeout:30000});
-  hud();
-}
-function stopGPS(){if(gpsWatch!=null)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;gpsOn=false;hud();}
-
-/* ---------- orientation (for AR parallax) ---------- */
-let oriBase=null,gotOri=false;const tiltT={x:0,y:0},tilt={x:0,y:0};
-function onOri(e){
-  if(e.alpha==null&&e.beta==null)return;gotOri=true;
-  if(!oriBase)oriBase={a:e.alpha||0,b:e.beta||0};
-  const da=(((e.alpha||0)-oriBase.a+540)%360)-180,db=(e.beta||0)-oriBase.b;
-  tiltT.x=clamp(da*9,-320,320);tiltT.y=clamp(db*7,-260,260);
-}
-window.addEventListener('deviceorientation',onOri);
-async function askOri(){try{if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)await DeviceOrientationEvent.requestPermission();}catch(e){}}
-
-/* ---------- camera ---------- */
-let stream=null;
-async function openCam(){
-  const v=$('#encVideo');
-  try{
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw 0;
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-    v.srcObject=stream;await v.play().catch(()=>{});
-    $('#enc').classList.add('cam');$('#arBadge').textContent='AR live';return true;
-  }catch(e){$('#enc').classList.remove('cam');$('#arBadge').textContent='Virtual';return false;}
-}
-function closeCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('#encVideo').srcObject=null;$('#enc').classList.remove('cam');}
-
-/* ---------- encounter ---------- */
-let enc=null;
-const encEl=$('#enc'),crEl=$('#creature'),ringEl=$('#ring'),ringBase=$('#ringBase'),shEl=$('#shadow'),orbEl=$('#orb');
-orbEl.innerHTML=ORB_SVG;
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function say(msg,ms=1100){const m=$('#encMsg');m.textContent=msg;m.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>m.classList.remove('show'),ms);}
-
-async function startEncounter(spawn){
-  enc={spawn,sp:spawn.sp,t0:performance.now(),busy:false,hide:false,scale:0,cx:0,cy:0,size:220,ring:1,over:false};
-  crEl.innerHTML=art(spawn.sp);
-  $('#encName').textContent=spawn.sp.name;
-  $('#encMeta').textContent=`${spawn.sp.type} · ${RARNAME[spawn.sp.rar]} · CP ${spawn.cp}`;
-  $('#result').classList.remove('open');$('#result').innerHTML='';
-  encEl.classList.add('open');oriBase=null;tilt.x=tilt.y=tiltT.x=tiltT.y=0;
-  orbEl.style.visibility='visible';hud();
-  if(S.cam)openCam();else{encEl.classList.remove('cam');$('#arBadge').textContent='Virtual';}
-  enc.raf=requestAnimationFrame(encLoop);
-  say(`A wild ${spawn.sp.name} appeared!`,1600);
-}
-function encLoop(t){
-  if(!enc)return;
-  const r=encEl.getBoundingClientRect(),w=r.width,h=r.height;
-  enc.size=Math.min(w*.58,230);crEl.style.setProperty('--cs',enc.size+'px');
-  tilt.x+=(tiltT.x-tilt.x)*.12;tilt.y+=(tiltT.y-tilt.y)*.12;
-  const s=(t-enc.t0)/1000;
-  const bobY=Math.sin(s*2.3)*9,sway=Math.sin(s*1.1)*10;
-  enc.scale+=((enc.hide?0:1)-enc.scale)*.16;
-  enc.cx=w/2+tilt.x+sway;enc.cy=h*.42+tilt.y+bobY;
-  const sc=Math.max(.02,enc.scale);
-  crEl.style.transform=`translate(${enc.cx-enc.size/2}px,${enc.cy-enc.size/2}px) scale(${sc}) rotate(${Math.sin(s*1.7)*3}deg)`;
-  crEl.style.opacity=enc.scale>.05?1:0;
-  shEl.style.transform=`translate(${enc.cx-75}px,${h*.42+tilt.y+enc.size*.46}px) scale(${.8+(-bobY/40)*.2})`;
-  enc.ring=1-.78*((s%1.7)/1.7);
-  const d=enc.size*1.65,rd=d*enc.ring;
-  ringBase.style.cssText=`width:${d}px;height:${d}px;transform:translate(${enc.cx-d/2}px,${enc.cy-d/2}px);opacity:${enc.hide?0:1}`;
-  ringEl.style.width=ringEl.style.height=rd+'px';
-  ringEl.style.transform=`translate(${enc.cx-rd/2}px,${enc.cy-rd/2}px)`;
-  ringEl.style.borderColor=enc.ring<.45?'#ffffff':enc.ring<.75?'#a9bdf0':'#5f82dc';
-  ringEl.style.opacity=enc.hide?0:1;
-  enc.raf=requestAnimationFrame(encLoop);
-}
-encEl.addEventListener('pointermove',e=>{if(!enc||gotOri||drag)return;const r=encEl.getBoundingClientRect();tiltT.x=((e.clientX-r.left)/r.width-.5)*-110;tiltT.y=((e.clientY-r.top)/r.height-.5)*-70;});
-
-/* orb flick */
-let drag=null;
-orbEl.addEventListener('pointerdown',e=>{if(!enc||enc.busy)return;orbEl.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,t:performance.now()};});
-orbEl.addEventListener('pointermove',e=>{if(!drag)return;orbEl.style.transform=`translate(${(e.clientX-drag.x)*.6}px,${(e.clientY-drag.y)*.6}px)`;});
-orbEl.addEventListener('pointerup',e=>{
-  if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag=null;orbEl.style.transform='';
-  const len=Math.hypot(dx,dy);
-  if(dy<-28&&len>40){
-    const R=encEl.getBoundingClientRect(),o=orbEl.getBoundingClientRect();
-    const sx=o.left-R.left+34,sy=o.top-R.top+34,dist=clamp(len*3.4,200,R.height);
-    throwOrb(sx+dx/len*dist,sy+dy/len*dist);
-  }
-});
-orbEl.addEventListener('pointercancel',()=>{drag=null;orbEl.style.transform='';});
-$('#auto').addEventListener('click',()=>{if(enc&&!enc.busy)throwOrb(enc.cx,enc.cy);});
-$('#encRun').addEventListener('click',()=>{if(enc&&!enc.busy)endEncounter();});
-
-async function throwOrb(tx,ty){
-  if(!enc||enc.busy)return;
-  if(S.orbs<=0){toast('Out of orbs. Find a Journ Stop on the map.');return;}
-  enc.busy=true;S.orbs--;hud();save();
-  const q=enc.ring,quality=q<.45?'Excellent!':q<.75?'Great!':'Nice';
-  const mult=q<.45?1.7:q<.75?1.3:1;
-  const R=encEl.getBoundingClientRect(),o=orbEl.getBoundingClientRect();
-  const sx=o.left-R.left+34,sy=o.top-R.top+34;
-  const fly=document.createElement('div');fly.className='fly';fly.innerHTML=ORB_SVG;
-  fly.style.left=(sx-34)+'px';fly.style.top=(sy-34)+'px';encEl.appendChild(fly);
-  orbEl.style.visibility='hidden';
-  const dx=tx-sx,dy=ty-sy;
-  const a=fly.animate([{transform:'translate(0,0) scale(1) rotate(0)'},{transform:`translate(${dx*.5}px,${dy*.5-70}px) scale(.8) rotate(360deg)`,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.5) rotate(720deg)`}],{duration:700,easing:'ease-out',fill:'forwards'});
-  await a.finished;
-  fly.style.left=(tx-34)+'px';fly.style.top=(ty-34)+'px';fly.style.transform='scale(.5)';a.cancel();
-  const hit=Math.hypot(tx-enc.cx,ty-enc.cy)<enc.size*.46;
-  if(!hit){
-    await fly.animate([{transform:'scale(.5) translateY(0)',opacity:1},{transform:'scale(.5) translateY(120px)',opacity:0}],{duration:450,fill:'forwards'}).finished;
-    fly.remove();orbEl.style.visibility='visible';enc.busy=false;
-    say('Missed!',800);
-    if(S.orbs<=0){await sleep(900);say('No orbs left',1200);await sleep(1200);endEncounter();}
-    return;
-  }
-  say(quality,900);enc.hide=true;await sleep(450);
-  const p=clamp(enc.sp.rate*mult*(1+(S.lvl-1)*.02),.08,.95),ok=Math.random()<p,shakes=ok?3:1+Math.floor(Math.random()*2);
-  await fly.animate([{transform:'scale(.5) translateY(0)'},{transform:'scale(.5) translateY(46px)'},{transform:'scale(.5) translateY(30px)'},{transform:'scale(.5) translateY(46px)'}],{duration:520,fill:'forwards'}).finished;
-  fly.style.top=(ty-34+46)+'px';fly.style.transform='scale(.5)';fly.getAnimations().forEach(x=>x.cancel());
-  for(let i=0;i<shakes;i++){
-    await fly.animate([{transform:'scale(.5) rotate(0)'},{transform:'scale(.5) rotate(-26deg)'},{transform:'scale(.5) rotate(26deg)'},{transform:'scale(.5) rotate(0)'}],{duration:760,easing:'ease-in-out'}).finished;
-    await sleep(240);
-  }
-  if(ok){fly.classList.add('win');await sleep(500);caught(quality,q);fly.remove();}
-  else{
-    fly.animate([{transform:'scale(.5)',opacity:1},{transform:'scale(1.6)',opacity:0}],{duration:420,fill:'forwards'});
-    await sleep(200);enc.hide=false;say('It broke free!',1100);await sleep(500);fly.remove();
-    orbEl.style.visibility='visible';
-    if(Math.random()<.28){await sleep(900);say(`${enc.sp.name} fled!`,1300);await sleep(1300);endEncounter();return;}
-    enc.busy=false;
-    if(S.orbs<=0){await sleep(700);endEncounter();}
-  }
-}
-function caught(quality,q){
-  const sp=enc.sp,cp=enc.spawn.cp,bonus=q<.45?50:q<.75?25:0,xp=80*sp.rar+bonus;
-  S.caught.push({id:sp.id,cp,t:Date.now()});
-  if(Math.random()<.5)S.orbs++;
-  spawns=spawns.filter(s=>s!==enc.spawn);
-  const first=S.caught.filter(c=>c.id===sp.id).length===1;
-  addXP(xp+(first?100:0));
-  const res=$('#result');
-  const is=issueOf(sp);
-  res.innerHTML=`<div class="resCard"><div>${art(sp)}</div><h3 class="display">Gotcha!</h3><p>${sp.name} joined your Journdex${first?' for the first time.':'.'}</p><div class="resStats"><span class="chip">CP ${cp}</span><span class="chip">+${xp+(first?100:0)} xp</span></div>${is?`<div class="egg"><small>EASTER EGG UNLOCKED · ${esc(sp.type).toUpperCase()}</small><b>${esc(is.title)}</b></div><button class="btn" id="resIssue" style="width:100%;margin-bottom:8px">Read the story</button>`:''}<button class="btn ghost" id="resOk" style="width:100%">Keep exploring</button></div>`;
-  res.classList.add('open');$('#resOk').addEventListener('click',endEncounter,{once:true});
-  const ri=$('#resIssue');if(ri)ri.addEventListener('click',()=>{endEncounter();openIssue(sp);},{once:true});
-}
-function endEncounter(){
-  if(!enc)return;
-  cancelAnimationFrame(enc.raf);enc=null;
-  encEl.querySelectorAll('.fly').forEach(n=>n.remove());
-  encEl.classList.remove('open');closeCam();
-  $('#result').classList.remove('open');$('#result').innerHTML='';
-  orbEl.style.visibility='visible';hud();save();
-}
-
-/* ---------- Journdex ---------- */
-/* ---------- monthly issues (data lives in <script id="issueData">) ---------- */
-const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'#';
-let ED={};try{ED=JSON.parse($('#issueData').textContent)||{};}catch(e){ED={};}
-const EDKEYS=Object.keys(ED).sort();
-const monthKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
-function curEd(){const k=monthKey();if(ED[k])return k;let b=null;for(const x of EDKEYS)if(x<=k)b=x;return b||EDKEYS[EDKEYS.length-1]||null;}
-let viewEd=curEd(),dexFilter='all';
-const issueOf=(sp,ed=viewEd)=>(ED[ed]&&ED[ed].issues&&ED[ed].issues[sp.name])||null;
-const rk=(sp,ed)=>ed+':'+sp.name;
-function edInfo(){
-  const m=ED[curEd()];
-  $('#edInfo').textContent=m?`${m.label} edition, compiled from reports as of ${m.asOf}. New stories drop every month.`:'Every Journ hides a real Philippine story. New stories drop every month.';
-}
-
-function renderDex(){
-  const g=$('#dexGrid');g.innerHTML='';let found=0,read=0;
-  const meta=ED[viewEd]||{};
-  for(const s of SPECIES){
-    const mine=S.caught.filter(c=>c.id===s.id),has=mine.length>0;if(has)found++;
-    const is=issueOf(s),st=S.read[rk(s,viewEd)];if(has&&is&&st)read++;
-    const show=dexFilter==='all'||(dexFilter==='caught'&&has)||(dexFilter==='unread'&&has&&is&&!st);
-    if(!show)continue;
-    const best=has?Math.max(...mine.map(c=>c.cp)):0;
-    const el=document.createElement('button');el.type='button';el.className='card'+(has?'':' unk');
-    el.innerHTML=`<img alt="${has?esc(s.name):'Undiscovered Journ'}" src="${uri(s)}"><b>${has?esc(s.name):'???'}</b><small>${has?`${esc(s.type)} · best CP ${best}`:RARNAME[s.rar]}</small>${has&&is&&!st?'<i class="newDot" aria-label="Unread story"></i>':''}`;
-    el.addEventListener('click',()=>has?openIssue(s):toast('Undiscovered. Find this Journ on the map to unlock its story.'));
-    g.appendChild(el);
-  }
-  if(!g.children.length){const p=document.createElement('p');p.className='note';p.style.gridColumn='1/-1';p.textContent=dexFilter==='unread'?'No unread stories. Catch more Journs to find the next one.':'Nothing here yet.';g.appendChild(p);}
-  $('#dexCount').textContent=`${found} / ${SPECIES.length}`;$('#dexProg').style.width=(found/SPECIES.length*100)+'%';
-  $('#dexSub').textContent=meta.label?`${meta.label} edition · ${read} of ${found} stories read`:'';
-  const bar=$('#edBar');bar.innerHTML='';
-  if(EDKEYS.length>1)[...EDKEYS].reverse().forEach(k=>{const b=document.createElement('button');b.className='fchip'+(k===viewEd?' on':'');b.type='button';b.setAttribute('aria-pressed',k===viewEd);b.textContent=ED[k].label||k;b.addEventListener('click',()=>{viewEd=k;renderDex();});bar.appendChild(b);});
-  const stale=curEd()!==monthKey()&&viewEd===curEd();
-  $('#edNote').textContent=stale?`The ${monthKey()} edition has not been published yet. Showing the latest one (${meta.label||viewEd}).`:'';
-  document.querySelectorAll('#dexFilter .fchip').forEach(b=>{const on=b.dataset.f===dexFilter;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
-}
-function openDex(){renderDex();$('#dex').classList.add('open');}
-document.querySelectorAll('#dexFilter .fchip').forEach(b=>b.addEventListener('click',()=>{dexFilter=b.dataset.f;renderDex();}));
-
-function openIssue(sp,ed=viewEd){
-  const is=issueOf(sp,ed),meta=ED[ed]||{},k=rk(sp,ed),body=$('#issueBody');
-  if(!is){
-    body.innerHTML=`<div class="issueHero"><span class="tagChip">${esc(sp.type)}</span><div>${art(sp)}</div><h3 class="display">${esc(sp.name)}</h3></div><p class="issueText">No story has been filed for this Journ in this edition yet. Check back next month.</p>`;
-    $('#issue').classList.add('open');return;
-  }
-  if(!S.read[k]){S.read[k]='read';addXP(25);toast('Story read: +25 xp');}
-  body.innerHTML=`<div class="issueHero"><span class="tagChip">${esc(sp.type)}</span><div>${art(sp)}</div><h3 class="display">${esc(sp.name)}</h3></div>
-    <p class="eyebrow">${esc(meta.label||ed)} edition · as of ${esc(meta.asOf||'')}</p>
-    <h3 class="display issueTitle">${esc(is.title)}</h3>
-    ${is.stat?`<div class="statBox"><b class="display">${esc(is.stat)}</b><span>${esc(is.statLabel||'')}</span></div>`:''}
-    <p class="issueText">${esc(is.body)}</p>
-    <div class="srcs"><b>Sources</b>${(is.sources||[]).map(x=>`<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.name)} ↗</a>`).join('')}</div>
-    ${is.check?`<div class="fc"><b>Fact or fiction?</b><p>${esc(is.check.claim)}</p><div class="fcBtns"><button class="btn sm" data-a="1">Fact</button><button class="btn sm ghost" data-a="0">Fiction</button></div><div class="fcOut" id="fcOut" role="status"></div></div>`:''}
-    <div class="issueActions"><button class="btn sm ghost" id="shareIssue">Share this story</button></div>
-    <p class="disc">Easter-egg stories are short summaries compiled from published reports as of ${esc(meta.asOf||'the date shown')}. Details change quickly, so follow the linked sources for full and current reporting.</p>`;
-  if(is.check){
-    const btns=body.querySelectorAll('.fcBtns [data-a]'),out=$('#fcOut',body);
-    const show=(st)=>{
-      btns.forEach(b=>b.disabled=true);
-      const ok=st==='ok';
-      out.innerHTML=`<b>${ok?'Correct. ':'Not quite. '}</b>${esc(is.check.why)}`;
-    };
-    if(S.read[k]==='ok'||S.read[k]==='miss')show(S.read[k]);
-    btns.forEach(b=>b.addEventListener('click',()=>{
-      if(S.read[k]==='ok'||S.read[k]==='miss')return;
-      const ok=(b.dataset.a==='1')===!!is.check.answer;
-      S.read[k]=ok?'ok':'miss';
-      if(ok){S.orbs+=2;addXP(40);toast('Fact-checked: +2 orbs, +40 xp');}else{addXP(10);toast('Good try: +10 xp');}
-      save();hud();show(S.read[k]);
-    }));
-  }
-  $('#shareIssue',body).addEventListener('click',async()=>{
-    const url=(is.sources&&is.sources[0]&&is.sources[0].url)||'';
-    const text=`${sp.name} (${sp.type}) on JourKnows GO: ${is.title}. ${is.stat?is.stat+' '+(is.statLabel||'')+'. ':''}Source: ${url}`;
-    try{
-      if(navigator.share){await navigator.share({title:'JourKnows GO',text});return;}
-      await navigator.clipboard.writeText(text);toast('Copied to clipboard');
-    }catch(e){if(e&&e.name!=='AbortError')toast('Sharing is not available here.');}
-  });
-  save();
-  $('#issue').classList.add('open');body.scrollTop=0;
-}
-$('#issue .back').addEventListener('click',()=>{if($('#dex').classList.contains('open'))renderDex();});
-$('#btnDex').addEventListener('click',openDex);
-$('#btnSet').addEventListener('click',()=>{hud();edInfo();$('#settings').classList.add('open');});
-document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('.sheet').classList.remove('open')));
-$('#btnCenter').addEventListener('click',()=>{W.tx=null;W.ty=null;toast(`${spawns.filter(s=>Math.hypot(s.x-W.x,s.y-W.y)<=RANGE).length} Journs in reach`);});
-$('#swGps').addEventListener('click',()=>{(gpsOn||gpsWatch!=null)?stopGPS():startGPS();});
-$('#swCam').addEventListener('click',async()=>{
-  if(!S.cam){
-    try{const st=await navigator.mediaDevices.getUserMedia({video:true});st.getTracks().forEach(t=>t.stop());S.cam=true;}
-    catch(e){S.cam=false;toast('Camera is blocked or unavailable here. Encounters use the virtual backdrop.',3200);}
-  }else S.cam=false;
-  save();hud();
-});
-$('#btnReset').addEventListener('click',()=>{
-  if(!confirm('Reset your Journdex, level and orbs?'))return;
-  S={xp:0,lvl:1,orbs:15,caught:[],cam:S.cam,read:{}};save();hud();toast('Progress reset');
-});
-
-/* ---------- start ---------- */
-const trio=$('#trio');[SPECIES[1],SPECIES[9],SPECIES[2]].forEach(s=>{const i=new Image();i.alt='';i.src=uri(s);trio.appendChild(i);});
-function begin(){
-  $('#start').classList.add('hide');
-  if(!mapStarted){mapStarted=true;resize();upkeep(performance.now());requestAnimationFrame(frame);}
-  hud();
-}
-$('#startAR').addEventListener('click',async()=>{
-  startGPS();
-  await askOri();
-  try{
-    const st=await navigator.mediaDevices.getUserMedia({video:true});st.getTracks().forEach(t=>t.stop());S.cam=true;
-  }catch(e){S.cam=false;}
-  save();begin();
-  if(!S.cam)toast('Camera unavailable. Encounters will use a virtual backdrop.',3200);
-});
-$('#startDemo').addEventListener('click',()=>{begin();toast('Tap the map to walk. Tap a Journ in the dashed circle to catch it.',3500);});
-edInfo();hud();
+renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+showHub();
+requestAnimationFrame(frame);
 })();
 </script>
 </body>
