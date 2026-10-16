@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a2260">
-<title>JourKnows Arcade</title>
+<title>JournGo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -168,36 +168,20 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-height:600px){.foot{display:none}#hub h1{font-size:clamp(18px,5.5vw,34px)}}
 @media(min-width:760px){.gchip{font-size:9px;min-height:88px}.gchip img{width:46px;height:46px}.dInfo h2{font-size:15px}.cbtn,#enter{font-size:15px}}
 
-/* ===== boot intro ===== */
-#intro{position:fixed;inset:0;z-index:100;background:#040b26;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(16px,4vh,30px);padding:24px;text-align:center;color:#fff;font-family:"Press Start 2P",monospace;cursor:pointer;overflow:hidden;transition:opacity .55s steps(6),visibility .55s}
+/* ===== JournGo launch intro (renders at low res for chunky 8-bit pixels) ===== */
+#intro{position:fixed;inset:0;z-index:100;background:#040b26;cursor:pointer;overflow:hidden;font-family:"Press Start 2P",monospace;color:#fff;transition:opacity .55s steps(6),visibility .55s}
 #intro.out{opacity:0;visibility:hidden}
-#intro::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 2px,transparent 2px 4px),radial-gradient(ellipse at center,rgba(31,72,168,.35),transparent 70%)}
-#intro::after{content:"";position:absolute;left:0;right:0;height:14vh;top:-14vh;pointer-events:none;background:linear-gradient(transparent,rgba(201,212,245,.16),transparent);animation:beam 2.4s linear .2s infinite}
-@keyframes beam{to{top:100vh}}
-.i-coin{position:relative;z-index:1;opacity:0;animation:cshow 0s .15s forwards,hop .9s steps(5) .15s infinite}
-.i-coin svg{display:block;width:clamp(56px,16vw,88px);height:auto;shape-rendering:crispEdges;animation:flip 1.2s steps(6) infinite}
-@keyframes cshow{to{opacity:1}}
-@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
-@keyframes flip{0%,100%{transform:scaleX(1)}25%{transform:scaleX(.25)}50%{transform:scaleX(-1)}75%{transform:scaleX(.25)}}
-#intro h1{position:relative;z-index:1;margin:0;display:flex;flex-direction:column;align-items:center;gap:.5em;font-size:clamp(20px,7.2vw,54px);line-height:1.2;font-weight:400}
-#intro .tw{display:block;overflow:hidden;white-space:nowrap;width:0;padding-right:6px;text-shadow:4px 4px 0 #1f48a8}
-#intro .tw.a{--n:9;color:#e9b020}
-#intro .tw.b{--n:6;color:#fff;text-shadow:4px 4px 0 #0a2260}
-#intro.go .tw.a{animation:typ .9s steps(9) .45s forwards}
-#intro.go .tw.b{animation:typ .65s steps(6) 1.45s forwards}
-@keyframes typ{to{width:calc(var(--n)*1ch + 6px)}}
-.i-sub{position:relative;z-index:1;font-size:clamp(8px,2.2vw,11px);line-height:1.8;color:#c9d4f5;opacity:0}
-#intro.go .i-sub{animation:cshow 0s 2.1s forwards}
-.i-bar{position:relative;z-index:1;width:min(320px,72vw);height:24px;border:4px solid #fff;padding:3px;opacity:0}
-#intro.go .i-bar{animation:cshow 0s .3s forwards}
-.i-bar i{display:block;height:100%;background:repeating-linear-gradient(90deg,#6f8fe6 0 calc(10% - 3px),transparent 0 10%);clip-path:inset(0 100% 0 0)}
-#intro.go .i-bar i{animation:fill 2.3s steps(10) .4s forwards}
-@keyframes fill{to{clip-path:inset(0 0 0 0)}}
-.i-press{position:relative;z-index:1;font-size:clamp(9px,2.6vw,13px);color:#fff;visibility:hidden}
-#intro.go .i-press{animation:vis 0s 2.7s forwards,blink 1s steps(2) 2.7s infinite}
-@keyframes vis{to{visibility:visible}}
-@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-@media(prefers-reduced-motion:reduce){#intro,#intro::after,.i-coin,.i-coin svg,#intro .tw,.i-sub,.i-bar,.i-bar i,.i-press{animation:none!important;transition:none!important}.i-coin,.i-sub,.i-bar,.i-press{opacity:1;visibility:visible}#intro .tw{width:auto}.i-bar i{clip-path:none}}
+#ic{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+#intro::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 2px,transparent 2px 4px),radial-gradient(ellipse at center,transparent 55%,rgba(4,11,38,.65))}
+#iCount{position:absolute;left:0;right:0;top:18%;text-align:center;font-size:clamp(56px,20vw,170px);color:#e9b020;text-shadow:6px 6px 0 #0a2260;pointer-events:none}
+#iHud{position:absolute;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));display:flex;justify-content:space-between;gap:8px;font-size:clamp(8px,2.4vw,12px);line-height:1.8;text-shadow:2px 2px 0 #08143f;pointer-events:none}
+#iHud b{color:#e9b020;font-weight:400}
+#iTitle{position:absolute;left:0;right:0;top:30%;margin:0;text-align:center;font-weight:400;font-size:clamp(28px,11vw,84px);color:#fff;text-shadow:6px 6px 0 #1f48a8;pointer-events:none;min-height:1.2em}
+#iSkip{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));text-align:center;font-size:clamp(8px,2.4vw,11px);color:#c9d4f5;pointer-events:none;animation:iBlink 1s steps(2) infinite}
+@keyframes iBlink{50%{opacity:0}}
+#iFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#intro{transition:none}#iSkip{animation:none}}
+#hub h1 span{margin-left:0!important}
 
 /* ===== palette roles: navy prominent, white secondary, mustard highlight ===== */
 :root{--must:#e9b020}
@@ -224,9 +208,6 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .jbtn[aria-pressed="true"]{background:var(--must)}
 .stItem{background:var(--soft)}
 #hub h1 span{color:var(--must)}
-#intro .tw.a{color:#fff}
-#intro .tw.b{color:var(--must)}
-.i-bar i{background:repeating-linear-gradient(90deg,var(--must) 0 calc(10% - 3px),transparent 0 10%)}
 
 /* ===== keep the Journs clear of the title and the dock ===== */
 #hub .spacer{min-height:clamp(250px,40vh,600px)}
@@ -237,18 +218,19 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 </style>
 </head>
 <body>
-<div id="intro" role="presentation" aria-label="JourKnows Arcade intro. Tap to skip.">
-  <div class="i-coin"><svg viewBox="0 0 12 12" aria-hidden="true"><path fill="#b9850f" d="M4 0h4v1h2v1h1v2h1v4h-1v2h-1v1H8v1H4v-1H2v-1H1V8H0V4h1V2h1V1h2z"/><path fill="#e9b020" d="M4 1h4v1h2v2h1v4h-1v2H8v1H4v-1H2V8H1V4h1V2h2z"/><path fill="#0a2260" d="M4 3h5v1H7v4H6v1H4V8h1v1h1V4H4z"/></svg></div>
-  <h1 aria-label="JourKnows Arcade"><span class="tw a">JOURKNOWS</span><span class="tw b">ARCADE</span></h1>
-  <div class="i-bar"><i></i></div>
-  <div class="i-sub">6 GAMES &middot; REAL PH STORIES</div>
-  <div class="i-press">PRESS START</div>
+<div id="intro" role="presentation" aria-label="JournGo intro: a rocket launches into space. Tap to skip.">
+  <canvas id="ic"></canvas>
+  <div id="iHud"><span id="iL"></span><span id="iR"></span></div>
+  <div id="iCount"></div>
+  <h1 id="iTitle"></h1>
+  <div id="iSkip">TAP TO SKIP</div>
+  <div id="iFlash"></div>
 </div>
 <canvas id="c" aria-label="3D game view"></canvas>
 
 <main id="hub">
   <header>
-    <h1 class="display">JourKnows<br><span>Arcade</span></h1>
+    <h1 class="display">Journ<span>Go</span></h1>
     <p>Six 3D minigames powered by this month's real Philippine stories. Pick a gem on the portal, then dive in.</p>
   </header>
   <div class="spacer"></div>
@@ -279,13 +261,12 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 <div id="modal" hidden><div id="mCard" role="dialog" aria-modal="true"></div></div>
 
 <script>
-/* boot intro: window.__intro resolves when it finishes or the visitor skips it */
 window.__intro=new Promise(function(done){
-  var el=document.getElementById('intro'),fin=false,red=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function end(){if(fin)return;fin=true;el.classList.add('out');document.removeEventListener('keydown',end);setTimeout(function(){el.hidden=true;},650);done();}
+  var el=document.getElementById('intro'),fin=false;
+  function end(){if(fin)return;fin=true;el.classList.add('out');document.removeEventListener('keydown',end);setTimeout(function(){el.hidden=true;if(window.__introStop)window.__introStop();},650);done();}
+  window.__introEnd=end;
   el.addEventListener('pointerdown',end);document.addEventListener('keydown',end);
-  var f=document.fonts&&document.fonts.load?Promise.race([document.fonts.load('16px "Press Start 2P"'),new Promise(function(r){setTimeout(r,900)})]):Promise.resolve();
-  f.catch(function(){}).then(function(){el.classList.add('go');setTimeout(end,red?900:3900);});
+  setTimeout(function(){if(!window.__introOn)end();},7000); /* safety: never trap the visitor if 3D can't start */
 });
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1366,7 +1347,7 @@ function enterPortal(){
 function goHub(){
   if(busy||!curKey)return;
   busy=true;closeModal();
-  VEIL.label(SP[S.pick],'JourKnows Arcade');
+  VEIL.label(SP[S.pick],'JournGo');
   VEIL.fade(1,REDUCED?120:260,()=>showHub(true));
 }
 function openGame(key){
@@ -1426,8 +1407,95 @@ function frame(now){
 }
 renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 if(window.ResizeObserver)new ResizeObserver(()=>{if(cur&&cur===hubScene)cur.resize();}).observe($('#hub .spacer'));
+/* ---------- JournGo rocket launch (3D, low-res pixel render) ---------- */
+function launchIntro(){
+  const el=$('#intro');if(!el||el.hidden)return;
+  if(REDUCED){window.__introOn=true;setTimeout(()=>window.__introEnd(),900);return;}
+  let rr;try{rr=new THREE.WebGLRenderer({canvas:$('#ic'),antialias:false});}catch(e){return;}
+  window.__introOn=true;
+  const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(55,1,.5,4000);sc.add(cam);
+  const F=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true}),sm=(a,b,x)=>{x=clamp((x-a)/(b-a),0,1);return x*x*(3-2*x);};
+  sc.add(new THREE.HemisphereLight(0xffffff,0x1f48a8,.95));
+  const sun=new THREE.DirectionalLight(0xffffff,.8);sun.position.set(30,60,40);sc.add(sun);
+  const sky=new THREE.Color('#6f8fe6'),dusk=new THREE.Color('#1f48a8'),space=new THREE.Color('#02050f'),bg=new THREE.Color();
+  sc.background=bg;sc.fog=new THREE.Fog(0x6f8fe6,80,400);
+  const add=(g,c,x,y,z,p)=>{const o=new THREE.Mesh(g,F(c));o.position.set(x,y,z);(p||sc).add(o);return o;};
+  /* world: the ground is the top of a planet, so the curve appears as you climb */
+  const R=3000;add(new THREE.SphereGeometry(R,44,30),'#14307a',0,-R,0);
+  add(new THREE.CylinderGeometry(18,20,1.4,10),'#c9d4f5',0,.7,0);
+  add(new THREE.CylinderGeometry(10,10,1.5,10),'#0a2260',0,.75,0);
+  add(new THREE.BoxGeometry(2.4,52,2.4),'#08143f',-19,26,0);
+  for(let i=0;i<5;i++)add(new THREE.BoxGeometry(11,.7,.7),'#e9b020',-13.5,8+i*9,0);
+  for(let i=0;i<16;i++){const a=i/16*6.28+rnd(-.2,.2),d=rnd(260,520),h=rnd(40,110);add(new THREE.ConeGeometry(rnd(50,100),h,5),i%2?'#0a2260':'#1f48a8',Math.cos(a)*d,h/2,Math.sin(a)*d);}
+  const cw=new THREE.MeshBasicMaterial({color:0xffffff,fog:false}),cg=new THREE.IcosahedronGeometry(1,0);
+  for(let i=0;i<18;i++){const a=rnd(0,6.28),d=rnd(40,160),y=rnd(70,320);for(let j=0;j<4;j++){const m=new THREE.Mesh(cg,cw);m.position.set(Math.cos(a)*d+j*9,y+rnd(-2,2),Math.sin(a)*d);m.scale.set(rnd(9,15),rnd(5,8),rnd(7,11));sc.add(m);}}
+  /* rocket */
+  const rk=new THREE.Group();sc.add(rk);
+  const lp=[[0,0],[1,0],[1.3,.4],[1.35,1.6],[1.3,5],[1.05,7.4],[.6,8.9],[0,10]].map(a=>new THREE.Vector2(a[0],a[1]));
+  rk.add(new THREE.Mesh(new THREE.LatheGeometry(lp,10),F('#ffffff')));
+  add(new THREE.ConeGeometry(1.1,3.2,10),'#0a2260',0,8.4,0,rk);
+  add(new THREE.CylinderGeometry(1.4,1.4,.7,10),'#e9b020',0,2.5,0,rk);
+  add(new THREE.CylinderGeometry(.85,.6,.6,8),'#08143f',0,-.2,0,rk);
+  for(let i=0;i<4;i++){const g=new THREE.Group();add(new THREE.BoxGeometry(2.2,3.4,.3),'#0a2260',1.9,1.2,0,g);g.rotation.y=i*Math.PI/2;rk.add(g);}
+  const pw=new THREE.Mesh(new THREE.CircleGeometry(.85,12),new THREE.MeshBasicMaterial({map:iconTex(SP[S.pick])}));pw.position.set(0,5.8,1.33);rk.add(pw);
+  const fl=new THREE.Group();fl.position.y=-.4;rk.add(fl);
+  [['#e9b020',.85,5,-2.7],['#ffffff',.45,3.2,-1.7]].forEach(([c,r,h,y])=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),new THREE.MeshBasicMaterial({color:c,fog:false}));m.rotation.x=Math.PI;m.position.y=y;fl.add(m);});
+  rk.scale.setScalar(3);rk.position.y=1.8;fl.visible=false;
+  /* smoke, stars, warp streaks */
+  const smk=[],sg=new THREE.IcosahedronGeometry(1,0),sMat=new THREE.MeshBasicMaterial({color:0xeef1fa});
+  const sp=[];for(let i=0;i<500;i++){const a=rnd(0,6.28),b=Math.acos(rnd(-.2,1));sp.push(Math.sin(b)*Math.cos(a)*2500,Math.cos(b)*2500,Math.sin(b)*Math.sin(a)*2500);}
+  const stg=new THREE.BufferGeometry();stg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+  const stars=new THREE.Points(stg,new THREE.PointsMaterial({color:0xffffff,size:2,sizeAttenuation:false,transparent:true,opacity:0,fog:false}));sc.add(stars);
+  const N=260,ws=[],wp=new Float32Array(N*6);for(let i=0;i<N;i++)ws.push([rnd(-45,45),rnd(-45,45),-rnd(5,200)]);
+  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.BufferAttribute(wp,3));
+  const warp=new THREE.LineSegments(wg,new THREE.LineBasicMaterial({color:0xc9d4f5,fog:false}));warp.frustumCulled=false;warp.visible=false;cam.add(warp);
+  /* low-res render = chunky pixels */
+  function size(){const px=Math.max(2,Math.round(Math.min(innerWidth,innerHeight)/250));rr.setPixelRatio(1);rr.setSize(Math.ceil(innerWidth/px),Math.ceil(innerHeight/px),false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
+  size();window.addEventListener('resize',size);
+  const $c=$('#iCount'),$l=$('#iL'),$r=$('#iR'),$t=$('#iTitle'),$f=$('#iFlash');
+  const T=[3.4,4.6,8.4,9.2,11.3];let t=0,v=0,last=performance.now(),raf=0,cn=-1,ended=false,ig=false;
+  const P0=new THREE.Vector3(),Pf=new THREE.Vector3(),Pb=new THREE.Vector3(),Lk=new THREE.Vector3();
+  function loop(now){
+    raf=requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;
+    const lift=t>=T[1],s=Math.max(0,t-T[1]);
+    if(t>=T[0]&&!ig){ig=true;fl.visible=true;sfx(70,'sawtooth',3,.08,240);}
+    if(lift){v+=dt*(10+34*s);rk.position.y+=v*dt;}
+    const alt=rk.position.y,a1=clamp(alt/220,0,1),a2=clamp((alt-200)/380,0,1),w=sm(T[3],T[3]+.8,t);
+    bg.copy(sky).lerp(dusk,a1).lerp(space,a2);sc.fog.color.copy(bg);sc.fog.far=400+alt*5;stars.material.opacity=a2;
+    /* countdown + HUD */
+    const n=t<T[0]?Math.max(1,3-Math.floor((t-.4)/1.0)):0;
+    if(n!==cn){cn=n;$c.textContent=t<.4?'':n>0?n:'GO!';if(n>0)sfx(660,'square',.1,.05);}
+    if(t>T[0]+1.1&&$c.textContent==='GO!')$c.textContent='';
+    $l.innerHTML=t<T[0]?'<b>T-MINUS</b> '+Math.max(0,Math.ceil(T[0]-t)):'<b>ALT</b> '+Math.round(alt*12).toLocaleString()+' M';
+    $r.innerHTML=t<T[0]?'ALL SYSTEMS <b>GO</b>':'<b>SPD</b> '+(v*.012).toFixed(1)+' KM/S';
+    /* rocket shake, flame, smoke */
+    const sh=t<T[0]?0:(lift?.5:.18)*(alt<500?1:.3);
+    rk.position.x=rnd(-sh,sh)*.4;rk.rotation.z=rnd(-sh,sh)*.02;
+    fl.scale.set(1,.8+rnd(0,.5)+(lift?.8:0),1);
+    if(ig&&alt<260)for(let i=0;i<(lift?2:3);i++){const a=rnd(0,6.28),sp2=rnd(10,28),m=new THREE.Mesh(sg,sMat);m.position.set(0,2,0);m.userData={vx:Math.cos(a)*sp2,vz:Math.sin(a)*sp2,l:0};m.scale.setScalar(rnd(2,4));sc.add(m);smk.push(m);}
+    for(let i=smk.length-1;i>=0;i--){const m=smk[i],u=m.userData;u.l+=dt;m.position.x+=u.vx*dt;m.position.z+=u.vz*dt;u.vx*=1-dt*1.5;u.vz*=1-dt*1.5;m.position.y+=dt*3;m.scale.multiplyScalar(1+dt*(u.l<1.8?.8:-1.2));if(u.l>3||m.scale.x<.5){sc.remove(m);smk.splice(i,1);}}
+    /* camera: hero shot on the pad, side chase, then low behind the rocket looking up */
+    const k=sm(.8,3.5,s),k2=sm(5.5,7.5,s),q=Math.min(1,t/T[1]);
+    P0.set(-40+14*q,6+5*q,58-14*q);Pf.set(rk.position.x-22,alt-6,34);Pb.set(6,alt-26,18);
+    cam.position.copy(P0).lerp(Pf,k).lerp(Pb,k2);
+    const cs=sh*.6;cam.position.x+=rnd(-cs,cs);cam.position.y+=rnd(-cs,cs);
+    Lk.set(0,alt+6+110*w,0);cam.lookAt(Lk);
+    cam.fov=55+w*50;cam.updateProjectionMatrix();
+    if(w>0){warp.visible=true;const pos=wg.attributes.position,len=4+w*70;for(let i=0;i<N;i++){const d=ws[i];d[2]+=dt*500*w;if(d[2]>-2)d[2]=-200;pos.setXYZ(i*2,d[0],d[1],d[2]);pos.setXYZ(i*2+1,d[0],d[1],d[2]-len);}pos.needsUpdate=true;}
+    /* title + exit */
+    if(t>T[2]){const c=Math.floor((t-T[2])*9);$t.textContent='JOURNGO'.slice(0,c);}
+    $f.style.opacity=sm(T[3]+.7,T[4]-.1,t);
+    rr.render(sc,cam);
+    if(t>=T[4]&&!ended){ended=true;window.__introEnd();}
+  }
+  window.__introStop=()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',size);try{rr.dispose();rr.forceContextLoss();}catch(e){}};
+  const go=()=>{last=performance.now();raf=requestAnimationFrame(loop);};
+  (document.fonts&&document.fonts.load?Promise.race([document.fonts.load('16px "Press Start 2P"'),new Promise(r=>setTimeout(r,700))]):Promise.resolve()).then(go,go);
+}
+
 /* arrive in the arcade through the portal */
-VEIL.label(SP[S.pick],'JourKnows Arcade');VEIL.drive(1);busy=true;
+VEIL.label(SP[S.pick],'JournGo');VEIL.drive(1);busy=true;
+launchIntro();
 (window.__intro||Promise.resolve()).then(()=>showHub(true));
 requestAnimationFrame(frame);
 })();
